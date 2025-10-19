@@ -6,6 +6,7 @@ const cors = require('cors');
 
 // Import routes
 const authRoutes = require('./authRoutes');
+const summarizeRoutes = require('./summarizeRoutes'); // <-- ADD THIS
 
 // Initialize express app
 const app = express();
@@ -29,6 +30,7 @@ connectDB();
 
 // --- API Routes ---
 app.use('/api/auth', authRoutes); // Use the auth routes for any /api/auth path
+app.use('/api/summarize', summarizeRoutes); // <-- ADD THIS
 
 // Define a simple route for the root
 app.get('/', (req, res) => {

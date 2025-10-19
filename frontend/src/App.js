@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Summarizer from './pages/Summarizer'; // <-- ADD THIS IMPORT
 
 // A simple component to protect routes
 const PrivateRoute = ({ children }) => {
@@ -23,6 +24,15 @@ function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        {/* ADD THIS NEW ROUTE */}
+        <Route
+          path="/summarizer"
+          element={
+            <PrivateRoute>
+              <Summarizer />
             </PrivateRoute>
           }
         />

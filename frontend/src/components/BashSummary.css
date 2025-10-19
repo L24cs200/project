@@ -1,0 +1,121 @@
+.summary-result-bash {
+  font-family: 'Fira Code', 'Consolas', 'Menlo', monospace;
+  background: radial-gradient(circle at 20% 20%, #1b1b1b 0%, #0e0e0e 100%);
+  border-radius: 12px;
+  margin-top: 1.5rem;
+  border: 1px solid #333;
+  box-shadow: 0 0 25px rgba(0, 255, 157, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.summary-result-bash:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 157, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Header bar */
+.bash-header {
+  background-color: #2b2b2b;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #444;
+  justify-content: space-between;
+}
+
+.bash-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.bash-button {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bash-button.red { background-color: #ff5f56; }
+.bash-button.yellow { background-color: #ffbd2e; }
+.bash-button.green { background-color: #27c93f; }
+
+.bash-title {
+  color: #bdbdbd;
+  font-size: 0.9rem;
+  text-align: center;
+  flex-grow: 1;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Copy button */
+.bash-copy-btn {
+  background: none;
+  border: none;
+  color: #00ff9d;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.bash-copy-btn:hover {
+  color: #ffea00;
+  transform: scale(1.05);
+}
+
+/* Body */
+.bash-body {
+  padding: 1.25rem 1.5rem;
+  color: #e0e0e0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00ff9d #1a1a1a;
+}
+
+/* Scrollbar (Chrome) */
+.bash-body::-webkit-scrollbar {
+  height: 6px;
+}
+.bash-body::-webkit-scrollbar-thumb {
+  background: #00ff9d;
+  border-radius: 10px;
+}
+
+/* Headings */
+.bash-h3 {
+  color: #00ff9d;
+  font-size: 1.2rem;
+  margin: 1rem 0 0.5rem 0;
+  text-shadow: 0 0 5px rgba(0, 255, 157, 0.6);
+}
+.bash-h4 {
+  color: #ffea00;
+  font-size: 1.1rem;
+  margin: 0.75rem 0 0.4rem 0;
+  text-shadow: 0 0 5px rgba(255, 234, 0, 0.6);
+}
+
+/* Prompts */
+.bash-prompt-green {
+  color: #00ff9d;
+  margin-right: 8px;
+  font-weight: 600;
+}
+.bash-prompt-yellow {
+  color: #ffea00;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+/* Line text */
+.bash-line {
+  color: #cfcfcf;
+  margin: 0 0 0.25rem 0;
+  transition: color 0.2s ease;
+}
+.bash-line:hover {
+  color: #ffffff;
+}

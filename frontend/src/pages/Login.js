@@ -22,6 +22,7 @@ const Login = () => {
     setError('');
     try {
       const res = await axios.post('/api/auth/login', formData);
+      console.log('Login successful:', res.data.token);
       // Save the token and user data to localStorage
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userName', res.data.user.name);
