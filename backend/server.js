@@ -3,19 +3,13 @@ require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
 // Import routes
 const authRoutes = require('./authRoutes');
 const summarizeRoutes = require('./summarizeRoutes'); // <-- ADD THIS
-
 // Initialize express app
 const app = express();
-
 // Middleware
-const cors = require('cors');
 app.use(cors({ origin: 'https://project-frontend-2dgh.onrender.com' }));
-
-
 // --- Database Connection ---
 const connectDB = async () => {
   try {
@@ -28,16 +22,13 @@ const connectDB = async () => {
   }
 };
 connectDB();
-
 // --- API Routes ---
 app.use('/api/auth', authRoutes); // Use the auth routes for any /api/auth path
 app.use('/api/summarize', summarizeRoutes); // <-- ADD THIS
-
 // Define a simple route for the root
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
-
 // --- Server Listening ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
