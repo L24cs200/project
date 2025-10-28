@@ -12,8 +12,9 @@ const summarizeRoutes = require('./summarizeRoutes'); // <-- ADD THIS
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse JSON bodies
+const cors = require('cors');
+app.use(cors({ origin: 'https://project-frontend-2dgh.onrender.com' }));
+
 
 // --- Database Connection ---
 const connectDB = async () => {
