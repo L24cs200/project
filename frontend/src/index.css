@@ -1,0 +1,24 @@
+/* A clean base for Tailwind to build upon */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-50 font-sans antialiased;
+}
+
+/* Custom spinner animation for loading states */
+@layer utilities {
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
