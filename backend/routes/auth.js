@@ -2,121 +2,141 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { check, validationResult } = require('express-validator');
-const User = require('../models/User'); // Correctly imports from the models folder
-require('dotenv').config();
+const User = require('../models/User'); 
+// const auth = require('../middleware/auth'); // Optional: If you have auth middleware
 
-// @route   POST /api/auth/register
-// @desc    Register a new user
+// @route   POST api/auth/register
+// @desc    Register user
 // @access  Public
-router.post(
-  '/register',
-  [
-    // Validation middleware for incoming data
-    check('name', 'Name is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail(),
-    check(
-      'password',
-      'Please enter a password with 6 or more characters'
-    ).isLength({ min: 6 }),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+router.post('/register', async (req, res) => {
+  const { name, email, password } = req.body;
 
-    const { name, email, password } = req.body;
-
-    try {
-      // 1. Check if user already exists
-      let user = await User.findOne({ email });
-      if (user) {
-        return res.status(400).json({ msg: 'User already exists' });
-      }
-
-      // 2. Create a new user instance
-      user = new User({
-        name,
-        email,
-        password,
-      });
-
-      // 3. Hash the password before saving
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
-
-      // 4. Save the user to the database
-      await user.save();
-
-      // 5. Send a success response
-      res.status(201).json({ msg: 'User registered successfully. Please log in.' });
-
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
-    }
+  // Simple validation
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Please enter all fields' });
   }
-);
 
-// @route   POST /api/auth/login
+  try {
+    // Check for existing user
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Create new user instance
+    user = new User({
+      name,
+      email,
+      password,
+    });
+
+    // --- ✅ THE FIX: Simplified Hashing ---
+    // Instead of generating salt separately, we pass the rounds (10) directly to hash().
+    // This ensures compatibility with bcrypt.compare() later.
+    user.password = await bcrypt.hash(password, 10);
+
+    // Save user to database
+    await user.save();
+
+    // Create JWT Token
+    const payload = {
+      user: {
+        id: user.id,
+        name: user.name
+      },
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }, // Token expires in 30 days
+      (err, token) => {
+        if (err) throw err;
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          },
+        });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   POST api/auth/login
 // @desc    Authenticate user & get token
 // @access  Public
-router.post(
-  '/login',
-  [
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Password is required').exists(),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
-    const { email, password } = req.body;
-
-    try {
-      // 1. Check if the user exists
-      let user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ msg: 'Invalid Credentials' });
-      }
-
-      // 2. Compare the submitted password with the hashed password
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid Credentials' });
-      }
-
-      // 3. If credentials are correct, create the JWT payload
-      const payload = {
-        user: {
-          id: user.id,
-        },
-      };
-
-      // 4. Sign the token and send it back to the client
-      jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        {
-          expiresIn: '5d', // Token will be valid for 5 days
-        },
-        (err, token) => {
-          if (err) throw err;
-          // Send the token and user details (excluding password)
-          res.json({
-            token,
-            user: { id: user.id, name: user.name, email: user.email },
-          });
-        }
-      );
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
-    }
+  // Simple validation
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Please enter all fields' });
   }
-);
+
+  try {
+    // Check for user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid Credentials' });
+    }
+
+    // Validate password
+    // This compares the plain text password with the hashed password in DB
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid Credentials' });
+    }
+
+    // Create JWT Token
+    const payload = {
+      user: {
+        id: user.id,
+        name: user.name
+      },
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' },
+      (err, token) => {
+        if (err) throw err;
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          },
+        });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET api/auth/user
+// @desc    Get user data (Private)
+// @access  Private (Requires Middleware)
+// You can uncomment this if you have the middleware set up
+/*
+router.get('/user', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+*/
 
 module.exports = router;
