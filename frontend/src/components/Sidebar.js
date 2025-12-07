@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiGrid, FiFileText, FiLogOut, FiBarChart2, FiHelpCircle, FiFastForward } from 'react-icons/fi';
+// Added FiHome to the imports
+import { FiGrid, FiFileText, FiLogOut, FiBarChart2, FiHelpCircle, FiFastForward, FiBook, FiHome } from 'react-icons/fi';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -23,6 +24,16 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2">
+        
+        {/* --- NEW: Home Feed Link --- */}
+        <NavLink
+          to="/home"
+          className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
+        >
+          <FiHome className="mr-3" />
+          Home Feed
+        </NavLink>
+
         <NavLink
           to="/dashboard"
           className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
@@ -30,6 +41,7 @@ const Sidebar = () => {
           <FiGrid className="mr-3" />
           Dashboard
         </NavLink>
+        
         <NavLink
           to="/summarizer"
           className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
@@ -37,6 +49,7 @@ const Sidebar = () => {
           <FiFileText className="mr-3" />
           Summarizer
         </NavLink>
+        
         <NavLink
           to="/quiz-generator"
           className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
@@ -45,13 +58,20 @@ const Sidebar = () => {
           Quiz Generator
         </NavLink>
         
-        {/* ✅ RENAMED: Path is now /visualizer and label is Visualizer */}
         <NavLink
           to="/visualizer"
           className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
         >
           <FiFastForward className="mr-3" />
           Visualizer
+        </NavLink>
+
+        <NavLink
+          to="/pdf-viewer"
+          className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
+        >
+          <FiBook className="mr-3" />
+          PDF Viewer
         </NavLink>
         
       </nav>

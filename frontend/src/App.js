@@ -1,17 +1,21 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
-// --- Import Page Components ---
+// --- Pages ---
+import Homepage from './pages/Homepage';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Summarizer from './pages/Summarizer';
 import QuizGenerator from './pages/QuizGenerator';
-import Spreeder from './pages/Spreeder'; // 👈 We keep the file import as Spreeder
+import Visualizer from './pages/Visualizer';
+import PdfViewer from './pages/PdfViewer';
+
+// --- Layout ---
 import Layout from './components/Layout';
 
-// This component checks if a user is logged in by looking for a token.
-// If not, it redirects them to the login page.
+// --- Private Route Logic ---
+// Checks for token. If missing, redirects to Login.
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" />;
@@ -21,14 +25,41 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes - Accessible to everyone */}
-        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* -------------------- PUBLIC ROUTES -------------------- */}
+        {/* These pages appear without the Sidebar Layout */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Private Routes - Require user to be logged in */}
-        {/* These routes are wrapped in the main application Layout with the sidebar */}
-        <Route
+        {/* -------------------- PRIVATE ROUTES -------------------- */}
+        
+        {/* 1. Root Path Redirect Logic:
+            - If User is NOT logged in: PrivateRoute sends them to /login
+            - If User IS logged in: Navigate sends them to /home
+        */}
+        <Route 
+          path="/" 
+          element={
+            <PrivateRoute>
+              <Navigate to="/home" replace />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* 2. The Actual Homepage Route */}
+        <Route 
+          path="/home"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <Homepage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* 3. Other App Pages (Wrapped in Layout) */}
+        <Route 
           path="/dashboard"
           element={
             <PrivateRoute>
@@ -38,7 +69,8 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
+
+        <Route 
           path="/summarizer"
           element={
             <PrivateRoute>
@@ -48,7 +80,8 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
+
+        <Route 
           path="/quiz-generator"
           element={
             <PrivateRoute>
@@ -58,14 +91,24 @@ function App() {
             </PrivateRoute>
           }
         />
-        
-        {/* ✅ UPDATED ROUTE TO /visualizer */}
-        <Route
+
+        <Route 
           path="/visualizer"
           element={
             <PrivateRoute>
               <Layout>
-                <Spreeder />
+                <Visualizer />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route 
+          path="/pdf-viewer"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfViewer />
               </Layout>
             </PrivateRoute>
           }

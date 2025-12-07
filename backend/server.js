@@ -7,7 +7,9 @@ const connectDB = require('./utils/db');
 const authRoutes = require('./routes/auth');
 const summarizeRoutes = require('./routes/summarizeRoutes');
 const quizRoutes = require('./routes/quizRoutes');
-const textRoutes = require('./routes/textRoutes');
+const visualizerRoutes = require('./routes/visualizerRoutes'); 
+const articleRoutes = require('./routes/articles'); 
+const timerRoutes = require('./routes/timer'); // <--- NEW IMPORT
 
 // --- 2. Connect to Database ---
 connectDB();
@@ -17,7 +19,7 @@ const app = express();
 // --- 3. Middleware ---
 app.use(express.json({ extended: false }));
 
-// --- 4. Enable CORS (Updated with your new frontend URL) ---
+// --- 4. Enable CORS ---
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3000/',
@@ -45,12 +47,11 @@ app.use(cors({
 // --- 5. API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/summarize', summarizeRoutes);
-app.use('/api/generate-quiz', quizRoutes);
-app.use('/api/text', textRoutes);
+app.use('/api/generate-quiz', quizRoutes); // Endpoint: POST /api/generate-quiz
+app.use('/api/visualizer', visualizerRoutes);
+app.use('/api/articles', articleRoutes); 
+app.use('/api/timer', timerRoutes); // <--- NEW ROUTE
 
-// --- 6. REMOVED frontend serving block (because repo has no frontend) ---
-// This avoids ENOENT error on Render.
-
-// --- 7. Start Server ---
+// --- 6. Start Server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

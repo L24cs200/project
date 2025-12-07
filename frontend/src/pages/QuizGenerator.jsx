@@ -1,175 +1,200 @@
-// frontend/src/pages/QuizGenerator.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FiUploadCloud, FiFile, FiLoader, FiHelpCircle } from 'react-icons/fi';
-import InteractiveQuiz from '../components/InteractiveQuiz';
-import QuizResult from '../components/QuizResult';
-import QuizReview from '../components/QuizReview'; // Import the review component
+import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fi';
 
 const QuizGenerator = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [quizData, setQuizData] = useState(null);
-  const [userAnswers, setUserAnswers] = useState({});
-  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [reviewData, setReviewData] = useState(null); // State for detailed review data
-  const [isReviewing, setIsReviewing] = useState(false); // State to toggle review screen
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [score, setScore] = useState(null);
 
-  const handleFileChange = (event) => {
-    // Reset everything when a new file is chosen
-    setSelectedFile(event.target.files[0]);
-    setQuizData(null);
-    setUserAnswers({});
-    setScore(null);
-    setError('');
-    setReviewData(null);
-    setIsReviewing(false);
+  // 1. Handle File Selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setSelectedFile(file);
+      setError('');
+      setQuizData(null);
+    } else {
+      setError('Please upload a valid PDF file.');
+    }
   };
 
-  const handleGenerateQuiz = async (event) => {
-    event.preventDefault();
-    if (!selectedFile) {
-      setError('Please select a PDF file first.');
-      return;
-    }
-    
-    setIsLoading(true);
-    // Reset previous results
-    setQuizData(null);
-    setUserAnswers({});
-    setScore(null);
-    setError('');
-    setReviewData(null);
-    setIsReviewing(false);
+  // 2. Generate Quiz
+  const handleGenerate = async () => {
+    if (!selectedFile) return;
 
+    setLoading(true);
+    setError('');
+    setScore(null);
+    setSelectedAnswers({});
+
+    // Create FormData for file upload
     const formData = new FormData();
     formData.append('pdfFile', selectedFile);
-    const token = localStorage.getItem('token');
 
     try {
-      const res = await axios.post('/api/generate-quiz', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': token,
-        },
+      // POST request with multipart/form-data
+      // Ensure the URL matches your backend port (default 5000)
+      const response = await axios.post('http://localhost:5000/api/generate-quiz', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setQuizData(res.data.questions);
+      
+      console.log("Quiz Received:", response.data);
+      
+      if (response.data && response.data.quiz) {
+        setQuizData(response.data.quiz);
+      } else {
+        throw new Error("Invalid response format from server.");
+      }
+
     } catch (err) {
-      setError(err.response?.data?.msg || 'An error occurred while generating the quiz.');
+      console.error(err);
+      setError(err.response?.data?.error || 'Server error. Please check your backend connection.');
+    } finally {
+      setLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const handleAnswerChange = (questionIndex, answer) => {
-    setUserAnswers({
-      ...userAnswers,
-      [questionIndex]: answer,
+  // 3. Handle Answers & Scoring
+  const handleOptionSelect = (qIndex, option) => {
+    setSelectedAnswers({ ...selectedAnswers, [qIndex]: option });
+  };
+
+  const handleSubmit = () => {
+    let newScore = 0;
+    quizData.forEach((q, idx) => {
+      if (selectedAnswers[idx] === q.correctAnswer) newScore++;
     });
+    setScore(newScore);
   };
-
-  // Called when the user clicks "Submit Quiz" in InteractiveQuiz
-  const handleSubmitQuiz = () => {
-    let correctAnswers = 0;
-    // Create the detailed data needed for the review screen
-    const detailedReview = quizData.map((question, index) => {
-        const correctAnswer = question.answer.trim().toLowerCase();
-        const userAnswer = (userAnswers[index] || "").trim().toLowerCase();
-        const isCorrect = correctAnswer === userAnswer;
-        if (isCorrect) {
-            correctAnswers++;
-        }
-        return {
-            question: question, // Contains question text, type, options, answer
-            userAnswer: userAnswers[index] || "", // User's submitted answer
-            isCorrect: isCorrect, // Boolean flag
-        };
-    });
-    setScore(correctAnswers);
-    setReviewData(detailedReview); // Store the detailed results
-    setIsReviewing(false); // Make sure we show the score screen first
-  };
-  
-  // Called from QuizResult or QuizReview to go back to the quiz
-  const handleRetakeQuiz = () => {
-    setUserAnswers({});
-    setScore(null);
-    setReviewData(null);
-    setIsReviewing(false);
-  };
-
-  // Called from QuizResult to switch to the review view
-  const handleShowReview = () => {
-    setIsReviewing(true);
-  };
-
-  // Called from QuizResult or QuizReview to go back to the file upload
-  const handleNewQuiz = () => {
-    handleFileChange({ target: { files: [null] }}); // Simulate file change to reset state
-  }
 
   return (
-    <div>
-      <h1 className="text-4xl font-bold text-slate-800">AI Quiz Generator</h1>
-      <p className="mt-2 text-lg text-slate-600">Upload course notes to generate practice questions and test your knowledge.</p>
+    <div className="p-6 max-w-4xl mx-auto min-h-screen bg-gray-50 text-gray-800 font-sans">
+      
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-indigo-600 flex items-center justify-center gap-2">
+          <FiCpu /> AI Quiz Generator
+        </h1>
+        <p className="text-gray-500 mt-2">Upload a PDF lecture or article to generate a practice test.</p>
+      </div>
 
-      <div className="mt-8 max-w-3xl">
-        {/* --- File Upload Form --- */}
-        {/* Only show the upload form if no quiz data exists yet */}
-        {!quizData && (
-            <form onSubmit={handleGenerateQuiz} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
-                    <FiUploadCloud className="mx-auto h-12 w-12 text-slate-400" />
-                    <label htmlFor="pdfFile" className="mt-4 block text-sm font-semibold text-primary-600 hover:text-primary-500 cursor-pointer">
-                    {selectedFile ? 'Change PDF File' : 'Upload a PDF file'}
-                    </label>
-                    <input id="pdfFile" type="file" accept="application/pdf" className="sr-only" onChange={handleFileChange} />
-                    {selectedFile && <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-600"><FiFile /> <span>{selectedFile.name}</span></div>}
-                </div>
-                <div className="mt-6">
-                    <button type="submit" disabled={isLoading || !selectedFile} className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-primary-600 text-white font-semibold rounded-lg shadow-md hover:bg-primary-700 disabled:opacity-50 transition-all">
-                    {isLoading ? <FiLoader className="animate-spin" /> : <FiHelpCircle />}
-                    {isLoading ? 'Generating Quiz...' : 'Generate Quiz'}
-                    </button>
-                </div>
-            </form>
+      {/* --- Upload Section --- */}
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6">
+        {!selectedFile ? (
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-10 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer relative">
+            <input type="file" accept=".pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            <FiUploadCloud size={48} className="text-indigo-400 mb-4" />
+            <p className="text-lg font-medium text-gray-700">Click to upload PDF</p>
+            <p className="text-sm text-gray-400 mt-1">Limit 10MB • .pdf only</p>
+          </div>
+        ) : (
+          <div className="border-2 border-dashed border-indigo-200 rounded-xl p-6 flex flex-col items-center justify-center bg-indigo-50/50">
+            <FiFileText size={40} className="text-indigo-600 mb-2" />
+            <p className="font-medium text-gray-800 text-center">{selectedFile.name}</p>
+            <button onClick={() => setSelectedFile(null)} className="mt-4 text-red-500 text-sm flex items-center gap-1 hover:underline">
+              <FiTrash2 /> Remove File
+            </button>
+          </div>
         )}
 
-        {/* --- Quiz and Results Display Area --- */}
-        <div className="mt-8">
-          {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md text-center mb-6">{error}</div>}
-          
-          {/* State 1: Taking the quiz (Quiz data exists, score is null) */}
-          {quizData && score === null && (
-            <InteractiveQuiz 
-              quizData={quizData} 
-              userAnswers={userAnswers}
-              onAnswerChange={handleAnswerChange}
-              onSubmit={handleSubmitQuiz} // This calculates score and reviewData
-            />
-          )}
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 text-sm">
+            <FiAlertCircle /> {error}
+          </div>
+        )}
 
-          {/* State 2: Viewing the score (Score exists, not reviewing) */}
-          {score !== null && !isReviewing && (
-            <QuizResult 
-                score={score}
-                totalQuestions={quizData.length}
-                onRetake={handleRetakeQuiz}
-                onNewQuiz={handleNewQuiz}
-                onReview={handleShowReview} // Pass the function to switch to review mode
-            />
-          )}
-
-          {/* State 3: Reviewing the answers (Reviewing is true, review data exists) */}
-          {isReviewing && reviewData && (
-              <QuizReview 
-                reviewData={reviewData} // Pass the detailed data to the review component
-                onRetake={handleRetakeQuiz}
-                onNewQuiz={handleNewQuiz}
-              />
-          )}
-        </div>
+        <button
+          onClick={handleGenerate}
+          disabled={loading || !selectedFile}
+          className={`mt-6 w-full py-3.5 rounded-lg font-bold text-white shadow-lg transition-all flex items-center justify-center gap-3
+            ${loading || !selectedFile ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}
+          `}
+        >
+          {loading ? <><FiLoader className="animate-spin" /> Generating Questions...</> : 'Generate Quiz'}
+        </button>
       </div>
+
+      {/* --- Quiz Display Section --- */}
+      {quizData && (
+        <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-indigo-500 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Practice Quiz</h2>
+            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">5 Questions</span>
+          </div>
+          
+          <div className="space-y-6">
+            {quizData.map((q, qIndex) => (
+              <div key={qIndex} className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="font-semibold text-lg mb-4 text-gray-800">
+                  <span className="text-indigo-600 mr-2">{qIndex + 1}.</span>
+                  {q.question}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {q.options.map((option, oIndex) => {
+                    const isSelected = selectedAnswers[qIndex] === option;
+                    const isCorrect = option === q.correctAnswer;
+                    const showResult = score !== null;
+
+                    let btnClass = "border-gray-300 bg-white hover:bg-gray-100 text-gray-700";
+                    
+                    if (showResult) {
+                      if (isCorrect) btnClass = "bg-green-100 border-green-500 text-green-800 font-bold ring-1 ring-green-500";
+                      else if (isSelected && !isCorrect) btnClass = "bg-red-100 border-red-500 text-red-800 ring-1 ring-red-500";
+                      else btnClass = "opacity-50";
+                    } else if (isSelected) {
+                      btnClass = "bg-indigo-50 border-indigo-500 text-indigo-700 font-semibold ring-1 ring-indigo-500";
+                    }
+
+                    return (
+                      <button
+                        key={oIndex}
+                        onClick={() => !showResult && handleOptionSelect(qIndex, option)}
+                        disabled={showResult}
+                        className={`p-3 text-left border rounded-lg transition-all text-sm ${btnClass}`}
+                      >
+                        <span className="inline-block w-6 font-bold opacity-50">{String.fromCharCode(65 + oIndex)}.</span> 
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer / Submit */}
+          <div className="mt-8 pt-6 border-t flex flex-col items-center">
+            {score === null ? (
+              <button
+                onClick={handleSubmit}
+                disabled={Object.keys(selectedAnswers).length < quizData.length}
+                className="w-full md:w-1/3 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-md"
+              >
+                Submit Answers
+              </button>
+            ) : (
+              <div className="text-center w-full bg-gray-100 p-6 rounded-xl">
+                <p className="text-3xl font-bold mb-2">
+                  Score: <span className={score === quizData.length ? "text-green-600" : "text-indigo-600"}>{score} / {quizData.length}</span>
+                </p>
+                <p className="text-gray-500 mb-4">{score === quizData.length ? "Perfect Score! 🎉" : "Keep practicing!"}</p>
+                
+                <button 
+                  onClick={() => { setQuizData(null); setScore(null); setSelectedFile(null); }}
+                  className="text-indigo-600 hover:text-indigo-800 font-bold underline"
+                >
+                  Start New Quiz
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

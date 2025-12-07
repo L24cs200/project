@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * Spreeder Component
- * A self-contained speed reading (RSVP) module that fetches chunks from the API.
+ * Visualizer Component
+ * A self-contained speed reading (RSVP) module.
  */
-export default function Spreeder() {
+export default function Visualizer() {
   // --- Motivational messages ---
   const messages = [
     'Fuel your goals — type here to level up 💪',
@@ -22,7 +22,6 @@ export default function Spreeder() {
     'You’re not just reading — you’re evolving 🧠',
   ];
 
-  // Pick a random motivational message + quote on load
   const [inputText, setInputText] = useState(() => {
     const random = Math.floor(Math.random() * messages.length);
     return messages[random];
@@ -35,7 +34,10 @@ export default function Spreeder() {
 
   // --- State Variables ---
   const [chunks, setChunks] = useState([]);
-  const [currentChunk, setCurrentChunk] = useState('Spreeder');
+  
+  // This is the default word shown before you start
+  const [currentChunk, setCurrentChunk] = useState('Visualizer'); 
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [wpm, setWpm] = useState(300);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -56,7 +58,10 @@ export default function Spreeder() {
     setIsPlaying(false);
     setCurrentChunk('Loading...');
 
-    const apiUrl = 'http://localhost:5001/api/text/chunks';
+    // ✅ FIXED: Updated API URL to match your new backend route
+    // Old: /api/text/chunks
+    // New: /api/visualizer/chunks
+    const apiUrl = 'http://localhost:5001/api/visualizer/chunks';
 
     try {
       const response = await fetch(apiUrl, {
@@ -69,8 +74,14 @@ export default function Spreeder() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'API request failed');
+        // Handle non-JSON responses (like 404 HTML pages) gracefully
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+           const errorData = await response.json();
+           throw new Error(errorData.message || 'API request failed');
+        } else {
+           throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        }
       }
 
       const data = await response.json();
@@ -84,8 +95,9 @@ export default function Spreeder() {
         setCurrentChunk('No text found.');
       }
     } catch (err) {
+      console.error(err);
       setError(
-        `Error: ${err.message}. Is your API server running on http://localhost:5001?`
+        `Error: ${err.message}. Is your backend running on http://localhost:5000?`
       );
       setCurrentChunk('Error!');
     } finally {
@@ -125,7 +137,7 @@ export default function Spreeder() {
       setCurrentIndex(0);
       setCurrentChunk(chunks[0]);
     } else {
-      setCurrentChunk('Spreeder');
+      setCurrentChunk('Visualizer');
     }
   };
 
@@ -145,15 +157,13 @@ export default function Spreeder() {
       style={{
         fontFamily:
           'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        maxWidth: '600px',
-        margin: '2rem auto',
-        padding: '1.5rem',
+        width: '100%',
         backgroundColor: '#f9fafb',
         borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+        border: '1px solid #e5e7eb',
+        padding: '1.5rem',
       }}
     >
-      {/* --- 0. Motivational Quote --- */}
       <div
         style={{
           textAlign: 'center',
@@ -166,7 +176,6 @@ export default function Spreeder() {
         {quote}
       </div>
 
-      {/* --- 1. Word Display --- */}
       <div
         style={{
           backgroundColor: '#ffffff',
@@ -188,7 +197,6 @@ export default function Spreeder() {
         </span>
       </div>
 
-      {/* --- 2. Text Input --- */}
       <textarea
         value={inputText}
         onChange={(e) => setInputText(e.target.value)}
@@ -207,7 +215,6 @@ export default function Spreeder() {
         }}
       />
 
-      {/* --- 3. Error Display --- */}
       {error && (
         <div
           style={{
@@ -224,7 +231,6 @@ export default function Spreeder() {
         </div>
       )}
 
-      {/* --- 4. Control Buttons --- */}
       <div
         style={{
           display: 'flex',
@@ -264,7 +270,6 @@ export default function Spreeder() {
         </button>
       </div>
 
-      {/* --- 5. Speed Slider --- */}
       <div
         style={{
           display: 'flex',
@@ -298,7 +303,6 @@ export default function Spreeder() {
   );
 }
 
-// --- Helper function for button styling ---
 const buttonStyle = (disabled = false) => ({
   flex: '1 1 auto',
   padding: '0.75rem 1rem',

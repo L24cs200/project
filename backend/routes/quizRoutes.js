@@ -1,99 +1,124 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
+const multer = require('multer');
+const pdf = require('pdf-parse');
+const fs = require('fs');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Route: POST /api/generate-quiz/generate
-router.post('/generate', async (req, res) => {
-  const { text } = req.body;
+// 1. Initialize Gemini
+if (!process.env.GEMINI_API_KEY) {
+  console.error("❌ FATAL: GEMINI_API_KEY is missing in .env");
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-  if (!text) {
-    return res.status(400).json({ message: 'Please provide text to generate a quiz.' });
+// 2. Configure Multer (Temp storage for uploads)
+const upload = multer({ dest: 'uploads/' });
+
+// --- Helper: Robust Model Selector ---
+// Tries different Gemini versions if one fails (404) or is busy
+async function generateWithFallback(prompt) {
+  const models = [
+    "gemini-1.5-flash", 
+    "gemini-1.5-flash-001", 
+    "gemini-1.5-flash-latest",
+    "gemini-pro",
+    "gemini-1.0-pro"
+  ];
+  
+  for (const modelName of models) {
+    try {
+      console.log(`🤖 Requesting quiz from model: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text(); 
+    } catch (error) {
+      console.warn(`⚠️ ${modelName} failed: ${error.message.split('[')[0]}`);
+      // Continue to the next model in the list
+    }
   }
+  throw new Error("All AI models failed. Please check your API Key and Google Cloud Billing.");
+}
 
+// --- Helper: Clean JSON ---
+// Extracts [ ... ] from the AI's response to ignore chatty intros like "Here is your JSON"
+function cleanJsonOutput(text) {
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start === -1 || end === -1) {
+    throw new Error("AI did not return a valid JSON array.");
+  }
+  return text.substring(start, end + 1);
+}
+
+// --- ROUTE: POST /api/generate-quiz ---
+router.post('/', upload.single('pdfFile'), async (req, res) => {
   try {
-    // 1. Check for API Key
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn("Warning: OPENAI_API_KEY is missing. Returning mock quiz.");
-      return res.json(getMockQuiz());
+    // A. Validation
+    if (!req.file) {
+      return res.status(400).json({ error: "No PDF uploaded" });
     }
 
-    // 2. Construct Prompt
+    // B. Extract Text
+    let extractedText = "";
+    try {
+      const buffer = fs.readFileSync(req.file.path);
+      const pdfData = await pdf(buffer);
+      extractedText = pdfData.text;
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to read PDF file" });
+    } finally {
+      // Always delete the temp file to keep server clean
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    }
+
+    if (!extractedText || extractedText.trim().length < 50) {
+      return res.status(400).json({ error: "PDF text is too short or empty." });
+    }
+
+    // C. Build Prompt
     const prompt = `
-      Generate a quiz with 3 multiple-choice questions based on the text below.
-
-      IMPORTANT: Return ONLY raw JSON. Do not include markdown formatting (like \`\`\`json).
+      You are a strict JSON generator. Create a quiz from the text below.
       
-      JSON structure:
-      {
-        "quiz": [
-          {
-            "question": "",
-            "options": ["A", "B", "C", "D"],
-            "answer": ""
-          }
-        ]
-      }
+      RULES:
+      1. Return ONLY a valid JSON Array.
+      2. No Markdown blocks (\`\`\`json).
+      3. No intro text (like "Here is the quiz").
+      4. Generate exactly 5 multiple-choice questions.
+      
+      FORMAT:
+      [
+        {
+          "question": "Question string?",
+          "options": ["A", "B", "C", "D"],
+          "correctAnswer": "A"
+        }
+      ]
 
-      Text to quiz: "${text.substring(0, 2000)}"
+      TEXT TO PROCESS:
+      ${extractedText.substring(0, 15000).replace(/"/g, "'")} 
     `;
 
-    // 3. Call OpenAI API
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: "gpt-4o-mini",  
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // D. Generate & Parse
+    const rawOutput = await generateWithFallback(prompt);
+    
+    // Clean potential markdown or intro text
+    const cleanedJson = cleanJsonOutput(rawOutput);
+    
+    let quiz;
+    try {
+      quiz = JSON.parse(cleanedJson);
+    } catch (e) {
+      console.error("JSON Parse Error. Raw:", rawOutput);
+      return res.status(500).json({ error: "AI generated invalid JSON. Please try again." });
+    }
 
-    // 4. Extract Output
-    let generatedText = response.data.choices[0].message.content;
-
-    // Remove accidental markdown
-    generatedText = generatedText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const quizData = JSON.parse(generatedText);
-
-    // 5. Send Real Quiz
-    res.json(quizData);
+    res.json({ quiz });
 
   } catch (error) {
-    console.error("OpenAI API Error (Quiz):", error.response?.data || error.message);
-    console.log("Falling back to Mock Quiz.");
-
-    // 6. Fallback
-    res.json(getMockQuiz());
+    console.error("🔥 Quiz Fatal Error:", error.message);
+    res.status(500).json({ error: error.message || "Failed to generate quiz." });
   }
 });
-
-// --- Helper: Mock Data ---
-function getMockQuiz() {
-  return {
-    quiz: [
-      {
-        question: "(Mock) What allows this app to generate quizzes?",
-        options: ["Magic", "OpenAI", "Random Chance", "Hard-coded Data"],
-        answer: "OpenAI"
-      },
-      {
-        question: "(Mock) Which file handles the quiz logic?",
-        options: ["server.js", "quizRoutes.js", "Dashboard.js", "App.js"],
-        answer: "quizRoutes.js"
-      },
-      {
-        question: "(Mock) If the API fails, what happens?",
-        options: ["App Crashes", "Nothing", "Shows Mock Quiz", "Computer Explodes"],
-        answer: "Shows Mock Quiz"
-      }
-    ]
-  };
-}
 
 module.exports = router;
