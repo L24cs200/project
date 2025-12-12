@@ -25,8 +25,9 @@ const allowedOrigins = [
   'http://localhost:3000/',
   'http://localhost:5000',
   'http://localhost:5000/',
-  'https://project-frontend-2dgh.onrender.com',   // old frontend
-  'https://projectedu-frontend.onrender.com'      // NEW frontend
+  'https://project-frontend-kncn.onrender.com', 
+  'https://project-frontend-kncn.onrender.com/'  // old frontend
+        // NEW frontend
 ];
 
 app.use(cors({
