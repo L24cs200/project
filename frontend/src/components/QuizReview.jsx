@@ -1,84 +1,97 @@
 import React from 'react';
-import { FiCheck, FiX, FiRefreshCw, FiUploadCloud } from 'react-icons/fi';
 
-const QuizReview = ({ reviewData, onRetake, onNewQuiz }) => {
+// Inline Icons
+const FiArrowLeft = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12"></line>
+    <polyline points="12 19 5 12 12 5"></polyline>
+  </svg>
+);
 
-  const getOptionStyle = (question, option, userAnswer) => {
-    const isCorrect = option === question.answer;
-    const isSelected = option === userAnswer;
+const FiCheck = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
 
-    if (isCorrect) {
-      return 'border-green-500 bg-green-50'; // Correct answer
-    }
-    if (isSelected && !isCorrect) {
-      return 'border-red-500 bg-red-50'; // User's incorrect choice
-    }
-    return 'border-slate-200'; // Default
-  };
+const FiX = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
 
-  const getShortAnswerStyle = (isCorrect) => {
-    return isCorrect 
-        ? 'border-green-500 bg-green-50' 
-        : 'border-red-500 bg-red-50';
+const QuizReview = ({ reviewData = [], onBack }) => {
+  // Guard clause to prevent "undefined reading map" errors
+  if (!reviewData || !Array.isArray(reviewData) || reviewData.length === 0) {
+    return (
+      <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-right duration-300">
+        <div className="flex items-center gap-4 mb-6">
+          <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors">
+            <FiArrowLeft />
+          </button>
+          <h2 className="text-2xl font-semibold text-slate-800">Answer Review</h2>
+        </div>
+        <div className="text-center py-10 text-slate-500">
+          No review data available.
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm">
-      <h2 className="text-2xl font-semibold text-slate-800 mb-6">Review Your Answers</h2>
-      <div className="space-y-8">
-        {reviewData.map((item, index) => (
-          <div key={index}>
-            <p className="font-semibold text-slate-700 mb-3 text-lg">
-              {index + 1}. {item.question.question}
-            </p>
-
-            {/* Review for Multiple Choice Questions */}
-            {item.question.type === 'MCQ' ? (
-              <div className="space-y-2">
-                {item.question.options.map((option, optionIndex) => (
-                  <div 
-                    key={optionIndex}
-                    className={`flex items-center justify-between p-3 rounded-lg border-2 ${getOptionStyle(item.question, option, item.userAnswer)}`}
-                  >
-                    <span className="text-slate-700">{option}</span>
-                    {option === item.question.answer && <FiCheck className="text-green-600" />}
-                    {option === item.userAnswer && !item.isCorrect && <FiX className="text-red-600" />}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Review for Short Answer Questions */
-              <div className="space-y-2">
-                <div className={`p-3 rounded-lg border-2 ${getShortAnswerStyle(item.isCorrect)}`}>
-                    <p className="text-sm font-medium text-slate-500">Your Answer:</p>
-                    <p className="text-slate-800">{item.userAnswer || <span className="italic text-slate-400">No answer provided</span>}</p>
-                </div>
-                {!item.isCorrect && (
-                    <div className="p-3 rounded-lg border-2 border-green-500 bg-green-50">
-                        <p className="text-sm font-medium text-green-700">Correct Answer:</p>
-                        <p className="text-green-800 font-semibold">{item.question.answer}</p>
-                    </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-right duration-300">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors">
+          <FiArrowLeft />
+        </button>
+        <h2 className="text-2xl font-semibold text-slate-800">Answer Review</h2>
       </div>
-       <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-slate-200">
-        <button
-          onClick={onRetake}
-          className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
-        >
-          <FiRefreshCw />
-          Retake Quiz
-        </button>
-        <button
-          onClick={onNewQuiz}
-          className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-primary-600 text-white font-semibold rounded-lg shadow-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
-        >
-          <FiUploadCloud />
-          Upload New PDF
-        </button>
+
+      <div className="space-y-8">
+        {reviewData.map((item, index) => {
+          // Additional safety check for item structure
+          if (!item || !item.question) return null;
+
+          return (
+            <div key={index} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <p className="font-semibold text-slate-800 mb-4 text-lg">
+                <span className="text-indigo-500 mr-2">{index + 1}.</span> 
+                {typeof item.question.question === 'string' ? item.question.question : JSON.stringify(item.question.question)}
+              </p>
+
+              <div className="space-y-2">
+                {item.question.options && item.question.options.map((option, optIndex) => {
+                  const isCorrectAnswer = option === item.question.correctAnswer;
+                  const isUserSelected = option === item.userAnswer;
+                  
+                  let style = "border-slate-200 bg-white";
+                  let icon = null;
+
+                  if (isCorrectAnswer) {
+                    style = "border-green-500 bg-green-50 text-green-800 font-medium";
+                    icon = <FiCheck className="text-green-600" />;
+                  } else if (isUserSelected && !isCorrectAnswer) {
+                    style = "border-red-500 bg-red-50 text-red-800";
+                    icon = <FiX className="text-red-600" />;
+                  } else if (isUserSelected) {
+                     style = "border-green-500 bg-green-50"; 
+                  }
+
+                  // Ensure option is rendered as a string to avoid object errors
+                  const displayOption = typeof option === 'object' ? JSON.stringify(option) : option;
+
+                  return (
+                    <div key={optIndex} className={`flex items-center justify-between p-3 rounded-lg border-2 ${style}`}>
+                      <span>{displayOption}</span>
+                      {icon}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
