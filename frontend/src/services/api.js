@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// --- FIX: Define the URL directly here ---
-// This removes the need for the missing '../config' file
-const BASE_URL = 'http://localhost:5000/api'; 
+// ✅ FIXED: Pointing directly to your Live Render Backend
+const BASE_URL = 'https://project-hggd.onrender.com/api'; 
 
 const api = axios.create({
   baseURL: BASE_URL,
