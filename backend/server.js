@@ -9,7 +9,8 @@ const summarizeRoutes = require('./routes/summarizeRoutes');
 const quizRoutes = require('./routes/quizRoutes');
 const visualizerRoutes = require('./routes/visualizerRoutes'); 
 const articleRoutes = require('./routes/articles'); 
-const timerRoutes = require('./routes/timer'); // <--- NEW IMPORT
+const timerRoutes = require('./routes/timer'); 
+const pdfToolRoutes = require('./routes/pdfToolRoutes');
 
 // --- 2. Connect to Database ---
 connectDB();
@@ -22,24 +23,25 @@ app.use(express.json({ extended: false }));
 // --- 4. Enable CORS ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://localhost:3000/',
   'http://localhost:5000',
-  'http://localhost:5000/',
   'https://project-frontend-kncn.onrender.com', 
-  'https://project-frontend-kncn.onrender.com/'  // old frontend
-        // NEW frontend
+  'http://192.168.255.147:3000', // <--- ADDED YOUR IP HERE
+  'http://192.168.255.147:5000'  // <--- Added backend IP just in case
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);   // allow mobile, Postman, curl
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
 
-    if (!allowedOrigins.includes(origin)) {
-      console.error(`❌ CORS Blocked: '${origin}' is NOT allowed`);
-      return callback(new Error('CORS: Origin not allowed'), false);
+    // Check if the origin is in the allowed list
+    // OR if the origin starts with "http://192.168." (Allow all local network devices for dev)
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://192.168.')) {
+      return callback(null, true);
     }
 
-    return callback(null, true);
+    console.error(`❌ CORS Blocked: '${origin}' is NOT allowed`);
+    return callback(new Error('CORS: Origin not allowed'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE']
@@ -48,10 +50,11 @@ app.use(cors({
 // --- 5. API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/summarize', summarizeRoutes);
-app.use('/api/generate-quiz', quizRoutes); // Endpoint: POST /api/generate-quiz
+app.use('/api/generate-quiz', quizRoutes);
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/articles', articleRoutes); 
-app.use('/api/timer', timerRoutes); // <--- NEW ROUTE
+app.use('/api/timer', timerRoutes);
+app.use('/api/pdf-tools', pdfToolRoutes);
 
 // --- 6. Start Server ---
 const PORT = process.env.PORT || 5000;

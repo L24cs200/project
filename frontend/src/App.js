@@ -10,12 +10,13 @@ import Summarizer from './pages/Summarizer';
 import QuizGenerator from './pages/QuizGenerator';
 import Visualizer from './pages/Visualizer';
 import PdfViewer from './pages/PdfViewer';
+import PdfTools from './pages/PdfTools';       // Imported
+import PdfToolView from './pages/PdfToolView'; // Imported
 
 // --- Layout ---
 import Layout from './components/Layout';
 
 // --- Private Route Logic ---
-// Checks for token. If missing, redirects to Login.
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" />;
@@ -27,16 +28,11 @@ function App() {
       <Routes>
 
         {/* -------------------- PUBLIC ROUTES -------------------- */}
-        {/* These pages appear without the Sidebar Layout */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
 
         {/* -------------------- PRIVATE ROUTES -------------------- */}
         
-        {/* 1. Root Path Redirect Logic:
-            - If User is NOT logged in: PrivateRoute sends them to /login
-            - If User IS logged in: Navigate sends them to /home
-        */}
         <Route 
           path="/" 
           element={
@@ -46,7 +42,6 @@ function App() {
           } 
         />
 
-        {/* 2. The Actual Homepage Route */}
         <Route 
           path="/home"
           element={
@@ -58,7 +53,6 @@ function App() {
           }
         />
 
-        {/* 3. Other App Pages (Wrapped in Layout) */}
         <Route 
           path="/dashboard"
           element={
@@ -112,6 +106,29 @@ function App() {
               </Layout>
             </PrivateRoute>
           }
+        />
+
+        {/* --- FIXED PDF TOOLS ROUTES (Wrapped in Layout) --- */}
+        <Route 
+          path="/pdf-tools"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfTools />
+              </Layout>
+            </PrivateRoute>
+          } 
+        />
+        
+        <Route 
+          path="/pdf-tools/:toolId" 
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfToolView />
+              </Layout>
+            </PrivateRoute>
+          } 
         />
 
       </Routes>

@@ -1,7 +1,9 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-// Added FiHome to the imports
+
+// Icons
 import { FiGrid, FiFileText, FiLogOut, FiBarChart2, FiHelpCircle, FiFastForward, FiBook, FiHome } from 'react-icons/fi';
+import { FaTools } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -13,19 +15,21 @@ const Sidebar = () => {
     navigate('/login');
   };
 
+  // Reusable styles for consistency
   const linkClasses = "flex items-center px-4 py-3 text-gray-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors duration-200";
   const activeLinkClasses = "bg-primary-600 text-white";
 
   return (
     <div className="hidden lg:flex flex-col w-64 bg-slate-800 text-white">
+      {/* Logo Area */}
       <div className="flex items-center justify-center h-20 border-b border-slate-700">
         <FiBarChart2 className="text-3xl text-primary-400" />
         <h1 className="text-2xl font-bold ml-2">RvrEdu</h1>
       </div>
 
+      {/* Navigation Links */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         
-        {/* --- NEW: Home Feed Link --- */}
         <NavLink
           to="/home"
           className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
@@ -73,9 +77,19 @@ const Sidebar = () => {
           <FiBook className="mr-3" />
           PDF Viewer
         </NavLink>
+
+        {/* --- NEW: PDF Tools Link (Styled to match) --- */}
+        <NavLink 
+            to="/pdf-tools"
+            className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
+        >
+            <FaTools className="mr-3" />
+            PDF Tools
+        </NavLink>
         
       </nav>
 
+      {/* User Footer */}
       <div className="px-4 py-6 border-t border-slate-700">
         <div className="text-sm text-gray-400 mb-2">Signed in as</div>
         <div className="font-semibold mb-4">{userName}</div>
