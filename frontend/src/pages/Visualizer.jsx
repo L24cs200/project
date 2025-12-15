@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
 
 /**
  * Visualizer Component
@@ -58,33 +59,16 @@ export default function Visualizer() {
     setIsPlaying(false);
     setCurrentChunk('Loading...');
 
-    // ✅ FIXED: Updated API URL to match your new backend route
-    // Old: /api/text/chunks
-    // New: /api/visualizer/chunks
-    const apiUrl = 'http://localhost:5001/api/visualizer/chunks';
-
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: inputText,
-          chunkSize: 1,
-        }),
+      // <--- UPDATED: Use api.post instead of fetch
+      // URL becomes '/visualizer/chunks' (api.js handles the domain)
+      const response = await api.post('/visualizer/chunks', {
+        text: inputText,
+        chunkSize: 1,
       });
 
-      if (!response.ok) {
-        // Handle non-JSON responses (like 404 HTML pages) gracefully
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-           const errorData = await response.json();
-           throw new Error(errorData.message || 'API request failed');
-        } else {
-           throw new Error(`API Error: ${response.status} ${response.statusText}`);
-        }
-      }
-
-      const data = await response.json();
+      // Axios returns the data directly in response.data
+      const data = response.data;
 
       if (data.chunks && data.chunks.length > 0) {
         setChunks(data.chunks);
@@ -97,7 +81,7 @@ export default function Visualizer() {
     } catch (err) {
       console.error(err);
       setError(
-        `Error: ${err.message}. Is your backend running on http://localhost:5000?`
+        `Error: ${err.message || 'Failed to process text'}. Is the backend running?`
       );
       setCurrentChunk('Error!');
     } finally {
