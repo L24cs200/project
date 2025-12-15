@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
+// import axios from 'axios';     // <--- REMOVED
 import { FiUploadCloud, FiFile, FiLoader } from 'react-icons/fi';
 import BashSummary from '../components/BashSummary'; 
 
@@ -30,7 +31,9 @@ const Summarizer = () => {
     formData.append('pdfFile', selectedFile);
 
     try {
-      const res = await axios.post('/api/summarize', formData, {
+      // <--- UPDATED: Use 'api.post'
+      // Note: We use '/summarize' because api.js already adds the '/api' prefix
+      const res = await api.post('/summarize', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setSummary(res.data.summary);
