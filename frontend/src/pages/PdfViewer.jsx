@@ -103,8 +103,6 @@ const TimerWidget = ({ darkMode }) => {
     const secs = seconds % 60;
     const hrs = Math.floor(mins / 60);
     const displayMins = mins % 60;
-    // For timer, we mostly care about MM:SS unless it's huge. 
-    // For stopwatch, HH:MM:SS is good if it runs long.
     if (hrs > 0) {
        return `${hrs}:${displayMins < 10 ? '0' : ''}${displayMins}:${secs < 10 ? '0' : ''}${secs}`;
     }
@@ -244,12 +242,11 @@ export default function PdfViewer() {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPdfFile(e.target.result);
+        // ✅ FIX: Use URL.createObjectURL instead of FileReader
+        // This is much faster and fixes the "Blank Screen" issue
+        const objectUrl = URL.createObjectURL(file);
+        setPdfFile(objectUrl);
         setFileName(file.name);
-      };
-      reader.readAsDataURL(file);
     } else {
       alert("Please upload a valid PDF file.");
     }
