@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
+// import axios from 'axios';     // <--- REMOVED: Do not use direct axios
 import ArticleCard from '../components/ArticleCard';
 import CreateArticleModal from '../components/CreateArticleModal';
 import { Loader2, Plus } from 'lucide-react';
@@ -13,7 +14,9 @@ const Homepage = () => {
   // Function to fetch articles from the backend
   const fetchArticles = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/articles');
+      // <--- UPDATED: Use 'api.get' and remove the domain
+      // The api.js file automatically adds 'https://.../api'
+      const res = await api.get('/articles'); 
       setArticles(res.data);
       setError('');
     } catch (err) {

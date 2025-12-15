@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
+// import axios from 'axios';     // <--- REMOVED
 import { Link, useNavigate } from 'react-router-dom';
 import { FiLogIn } from 'react-icons/fi';
 
@@ -17,7 +18,8 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await axios.post('/api/auth/login', formData);
+      // <--- UPDATED: Use 'api.post' (The base URL is handled automatically)
+      const res = await api.post('/auth/login', formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userName', res.data.user.name);
       navigate('/dashboard');
