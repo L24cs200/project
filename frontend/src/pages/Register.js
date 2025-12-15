@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
+// import axios from 'axios';     // <--- REMOVED
 import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
@@ -18,7 +19,8 @@ const Register = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await axios.post('/api/auth/register', formData);
+      // <--- UPDATED: Use 'api.post' (The base URL is handled automatically)
+      const res = await api.post('/auth/register', formData);
       setMessage(res.data.msg);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
