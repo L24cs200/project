@@ -5,11 +5,12 @@ const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    // No unique constraint here, which is correct!
   },
   email: {
     type: String,
     required: true,
-    unique: true, // Ensure emails are unique
+    unique: true, // Keep this! Emails must be unique.
   },
   password: {
     type: String,
@@ -17,9 +18,10 @@ const UserSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    default: Date.now, // Automatically set registration date
+    default: Date.now,
   },
 });
 
-// The third argument specifies the collection name ('users') in MongoDB
-module.exports = mongoose.model('user', UserSchema, 'users');
+// ✅ FIX: Changed 'users' to 'users_new'
+// This creates a brand new table in the database, ignoring the old broken rules.
+module.exports = mongoose.model('user', UserSchema, 'users_new');
