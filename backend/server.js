@@ -6,7 +6,7 @@ const connectDB = require('./utils/db');
 // --- 1. Import Routes ---
 const authRoutes = require('./routes/auth');
 const summarizeRoutes = require('./routes/summarizeRoutes');
-const quizRoutes = require('./routes/quiz');
+const quizRoutes = require('./routes/quiz'); // ✅ CORRECT: Points to renamed quiz.js
 const visualizerRoutes = require('./routes/visualizerRoutes'); 
 const articleRoutes = require('./routes/articles'); 
 const timerRoutes = require('./routes/timer'); 
@@ -25,8 +25,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5000',
   'https://project-frontend-kncn.onrender.com', 
-  'http://192.168.255.147:3000', // <--- ADDED YOUR IP HERE
-  'http://192.168.255.147:5000'  // <--- Added backend IP just in case
+  'http://192.168.255.147:3000', // Your Local IP
+  'http://192.168.255.147:5000'  
 ];
 
 app.use(cors({
@@ -35,7 +35,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     // Check if the origin is in the allowed list
-    // OR if the origin starts with "http://192.168." (Allow all local network devices for dev)
+    // OR if the origin starts with "http://192.168." (Allow all local network devices)
     if (allowedOrigins.includes(origin) || origin.startsWith('http://192.168.')) {
       return callback(null, true);
     }
@@ -50,7 +50,7 @@ app.use(cors({
 // --- 5. API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/summarize', summarizeRoutes);
-app.use('/api/quiz', quizRoutes);
+app.use('/api/quiz', quizRoutes); // ✅ Route mounted at /api/quiz
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/articles', articleRoutes); 
 app.use('/api/timer', timerRoutes);

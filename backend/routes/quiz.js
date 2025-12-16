@@ -4,9 +4,10 @@ const multer = require('multer');
 const pdf = require('pdf-parse');
 const fs = require('fs');
 const axios = require('axios');
+const os = require('os'); // <--- Import OS to find the system temp folder
 
-// Init Upload Middleware
-const upload = multer({ dest: 'uploads/' });
+// ✅ FIX 1: Use os.tmpdir() to prevent "Missing uploads folder" crash on Render
+const upload = multer({ dest: os.tmpdir() });
 
 // --- HELPER: Clean JSON Output ---
 function cleanJsonOutput(text) {
@@ -23,7 +24,7 @@ function cleanJsonOutput(text) {
   return text.substring(start, end + 1);
 }
 
-// ✅ FIX: Changed path from '/' to '/generate' to match Frontend
+// ✅ FIX 2: Path is '/generate' to match Frontend POST request
 router.post('/generate', upload.single('pdfFile'), async (req, res) => {
   try {
     // 1. Validate File Upload
@@ -37,8 +38,10 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
       const pdfData = await pdf(buffer);
       extractedText = pdfData.text;
     } catch (err) {
+      console.error("PDF Read Error:", err);
       return res.status(500).json({ error: "Failed to read PDF file" });
     } finally {
+      // Clean up uploaded file
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     }
 
@@ -69,8 +72,11 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
     [/INST]`;
 
     // 5. Call Hugging Face API
-    console.log("🤖 Sending request to Hugging Face...");
-    
+    // Check API Key
+    if (!process.env.HUGGINGFACE_API_KEY) {
+        throw new Error("Missing HUGGINGFACE_API_KEY in environment variables");
+    }
+
     const response = await axios.post(
       'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
       {
@@ -97,14 +103,18 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
     const quiz = JSON.parse(cleanedJson);
 
     // 7. Send Response
-    // ✅ FIX: Ensure structure matches what frontend expects ({ quiz: [...] })
     res.json({ quiz });
 
   } catch (error) {
     console.error("🔥 Quiz Generation Error:", error.response?.data || error.message);
+    
     if (error.message.includes("JSON")) {
         return res.status(500).json({ error: "AI failed to format the quiz correctly. Please try again." });
     }
+    if (error.message.includes("API_KEY")) {
+        return res.status(500).json({ error: "Server configuration error: Missing API Key." });
+    }
+    
     res.status(500).json({ error: "Failed to generate quiz. Check backend logs." });
   }
 });
