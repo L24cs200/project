@@ -3,55 +3,37 @@ const router = express.Router();
 const multer = require('multer');
 const pdf = require('pdf-parse');
 const fs = require('fs');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const axios = require('axios'); // <--- Using Axios for Hugging Face
 
-// Init GEMINI
-if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ FATAL: GEMINI_API_KEY is missing in .env");
-}
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
+// Init Upload Middleware
 const upload = multer({ dest: 'uploads/' });
 
-// --- ROBUST MODEL SELECTOR ---
-async function generateWithFallback(prompt) {
-  const models = [
-    "gemini-1.5-flash", 
-    "gemini-1.5-flash-latest",
-    "gemini-pro",
-    "gemini-1.0-pro"
-  ];
-  
-  for (const modelName of models) {
-    try {
-      console.log(`🤖 Requesting quiz from model: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text(); 
-    } catch (error) {
-      console.warn(`⚠️ ${modelName} Failed.`);
-      console.warn(`📝 Error Details: ${error.message}`); 
-    }
-  }
-  throw new Error("All AI models failed. Please check your API Key and Google Cloud Billing.");
-}
-
+// --- HELPER: Clean JSON Output ---
+// AI sometimes adds text before/after the JSON. This extracts just the array.
 function cleanJsonOutput(text) {
   const start = text.indexOf('[');
   const end = text.lastIndexOf(']');
   if (start === -1 || end === -1) {
+    // Sometimes models return a single object instead of an array. Let's check for that too.
+    const startObj = text.indexOf('{');
+    const endObj = text.lastIndexOf('}');
+    if (startObj !== -1 && endObj !== -1) {
+        return `[${text.substring(startObj, endObj + 1)}]`; // Wrap it in an array
+    }
     throw new Error("AI did not return a valid JSON array.");
   }
   return text.substring(start, end + 1);
 }
 
-// --- ROUTE ---
+// --- ROUTE: Generate Quiz from PDF ---
 router.post('/', upload.single('pdfFile'), async (req, res) => {
   try {
+    // 1. Validate File Upload
     if (!req.file) return res.status(400).json({ error: "No PDF uploaded" });
 
     let extractedText = "";
+
+    // 2. Extract Text from PDF
     try {
       const buffer = fs.readFileSync(req.file.path);
       const pdfData = await pdf(buffer);
@@ -59,43 +41,82 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
     } catch (err) {
       return res.status(500).json({ error: "Failed to read PDF file" });
     } finally {
+      // Clean up uploaded file
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     }
 
+    // 3. Validate Text Length
     if (!extractedText || extractedText.trim().length < 50) {
-      return res.status(400).json({ error: "PDF text is too short." });
+      return res.status(400).json({ error: "PDF text is too short or empty." });
     }
 
-    const prompt = `
-      You are a strict JSON generator. Create a quiz from the text below.
-      RULES:
-      1. Return ONLY a valid JSON Array.
-      2. No Markdown blocks.
-      3. Generate exactly 5 questions.
-      
-      FORMAT:
-      [
-        {
-          "question": "Question string?",
-          "options": ["A", "B", "C", "D"],
-          "correctAnswer": "A",
-          "type": "MCQ"
+    // 4. Construct Prompt (Mistral Format)
+    // We truncate text to ~3000 chars to avoid token limits on free tier
+    const truncatedText = extractedText.substring(0, 3000).replace(/\n/g, " ");
+    
+    const prompt = `[INST] You are an expert educational AI. Generate a quiz based on the text below.
+    
+    STRICT REQUIREMENTS:
+    1. Return ONLY a raw JSON Array. Do not use Markdown (no \`\`\`json).
+    2. Create exactly 5 questions.
+    3. Follow this specific JSON structure:
+    [
+      {
+        "question": "Question text here?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswer": "Option A"
+      }
+    ]
+
+    TEXT TO ANALYZE:
+    "${truncatedText}"
+    [/INST]`;
+
+    // 5. Call Hugging Face API (Mistral-7B-Instruct)
+    console.log("🤖 Sending request to Hugging Face...");
+    
+    // We use a robust model like Mistral-7B-Instruct-v0.2
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+      {
+        inputs: prompt,
+        parameters: { 
+            max_new_tokens: 1500, 
+            return_full_text: false,
+            temperature: 0.1 // Low temperature = strictly follows instructions
         }
-      ]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-      TEXT:
-      ${extractedText.substring(0, 15000).replace(/"/g, "'")} 
-    `;
+    // 6. Parse Response
+    let generatedText = response.data[0].generated_text;
+    console.log("Raw AI Response:", generatedText.substring(0, 100) + "..."); // Debug log
 
-    const rawOutput = await generateWithFallback(prompt);
-    const cleanedJson = cleanJsonOutput(rawOutput);
+    // Clean up markdown if the AI added it despite instructions
+    generatedText = generatedText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // Extract and Parse JSON
+    const cleanedJson = cleanJsonOutput(generatedText);
     const quiz = JSON.parse(cleanedJson);
 
+    // 7. Send Response
     res.json({ quiz });
 
   } catch (error) {
-    console.error("🔥 Quiz Fatal Error:", error.message);
-    res.status(500).json({ error: error.message || "Failed to generate quiz." });
+    console.error("🔥 Quiz Generation Error:", error.response?.data || error.message);
+    
+    // Handle specific JSON parse errors
+    if (error.message.includes("JSON")) {
+        return res.status(500).json({ error: "AI failed to format the quiz correctly. Please try again." });
+    }
+    
+    res.status(500).json({ error: "Failed to generate quiz. Check backend logs." });
   }
 });
 

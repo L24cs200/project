@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fi';
+import api from '../services/api'; // <--- UPDATED: Import central API helper
+// import axios from 'axios';     // <--- REMOVED
+import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fa';
 
 const QuizGenerator = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -36,9 +37,10 @@ const QuizGenerator = () => {
     formData.append('pdfFile', selectedFile);
 
     try {
-      // POST request with multipart/form-data
-      // Ensure the URL matches your backend port (default 5000)
-      const response = await axios.post('http://localhost:5000/api/generate-quiz', formData, {
+      // <--- UPDATED: Use 'api.post'
+      // The backend route is likely '/api/quiz' (defined in server.js)
+      // Since api.js adds '/api', we just use '/quiz' here.
+      const response = await api.post('/quiz', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       

@@ -50,7 +50,7 @@ app.use(cors({
 // --- 5. API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/summarize', summarizeRoutes);
-app.use('/api/generate-quiz', quizRoutes);
+app.use('/api/quiz', quizRoutes);
 app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/articles', articleRoutes); 
 app.use('/api/timer', timerRoutes);
