@@ -7,19 +7,19 @@ const TaskSchema = new mongoose.Schema({
     required: true
   },
   title: { type: String, required: true },
-  type: { 
-    type: String, 
-    enum: ['exam', 'assignment', 'study', 'class'], 
-    default: 'study' 
-  },
   subject: { type: String, required: true },
   dueDate: { type: Date, required: true },
+  
+  // --- UPDATED PRIORITY ENUM ---
   priority: { 
     type: String, 
-    enum: ['high', 'medium', 'low'], 
-    default: 'medium' 
+    enum: ['do_first', 'schedule', 'delegate', 'delete'], 
+    default: 'do_first' 
   },
+  
+  // We keep this for the "Delegate" or "Delete" section
   isCompleted: { type: Boolean, default: false },
+  
   createdAt: { type: Date, default: Date.now }
 });
 
