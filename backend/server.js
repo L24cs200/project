@@ -6,7 +6,7 @@ const connectDB = require('./utils/db');
 // --- 1. Import Routes ---
 const authRoutes = require('./routes/auth');
 const summarizeRoutes = require('./routes/summarizeRoutes');
-const quizRoutes = require('./routes/quizRoutes');
+const quizRoutes = require('./routes/quiz');
 const visualizerRoutes = require('./routes/visualizerRoutes'); 
 const articleRoutes = require('./routes/articles'); 
 const timerRoutes = require('./routes/timer'); 
