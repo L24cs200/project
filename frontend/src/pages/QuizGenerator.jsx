@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import api from '../services/api'; // <--- UPDATED: Import central API helper
-// import axios from 'axios';     // <--- REMOVED
-import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fa';
+import api from '../services/api'; 
+// ✅ FIX: Change 'react-icons/fa' to 'react-icons/fi'
+import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fi';
 
 const QuizGenerator = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -37,24 +37,32 @@ const QuizGenerator = () => {
     formData.append('pdfFile', selectedFile);
 
     try {
-      // <--- UPDATED: Use 'api.post'
-      // The backend route is likely '/api/quiz' (defined in server.js)
-      // Since api.js adds '/api', we just use '/quiz' here.
-      const response = await api.post('/quiz', formData, {
+      // The backend route is likely '/api/quiz/generate' or just '/api/quiz'
+      // Based on your previous backend code (if using Hugging Face), check your route.
+      // If your server.js uses app.use('/api/quiz', quizRoutes) and router is router.post('/generate'...)
+      // Then the URL below should be '/quiz/generate'.
+      // If it is just router.post('/', ...) then use '/quiz'.
+      
+      // I will assume '/quiz/generate' for safety based on previous steps, 
+      // but if you kept the simple one, change this to '/quiz'.
+      const response = await api.post('/quiz/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
       console.log("Quiz Received:", response.data);
       
-      if (response.data && response.data.quiz) {
-        setQuizData(response.data.quiz);
+      // Handle both possible response structures (array or object with quiz key)
+      const data = response.data.quiz || response.data;
+      
+      if (Array.isArray(data)) {
+        setQuizData(data);
       } else {
         throw new Error("Invalid response format from server.");
       }
 
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Server error. Please check your backend connection.');
+      setError(err.response?.data?.msg || err.response?.data?.error || 'Server error. Please check your backend connection.');
     } finally {
       setLoading(false);
     }
@@ -68,7 +76,7 @@ const QuizGenerator = () => {
   const handleSubmit = () => {
     let newScore = 0;
     quizData.forEach((q, idx) => {
-      if (selectedAnswers[idx] === q.correctAnswer) newScore++;
+      if (selectedAnswers[idx] === q.answer || selectedAnswers[idx] === q.correctAnswer) newScore++;
     });
     setScore(newScore);
   };
@@ -125,7 +133,7 @@ const QuizGenerator = () => {
         <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-indigo-500 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Practice Quiz</h2>
-            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">5 Questions</span>
+            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">{quizData.length} Questions</span>
           </div>
           
           <div className="space-y-6">
@@ -139,7 +147,8 @@ const QuizGenerator = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {q.options.map((option, oIndex) => {
                     const isSelected = selectedAnswers[qIndex] === option;
-                    const isCorrect = option === q.correctAnswer;
+                    const correctAns = q.answer || q.correctAnswer;
+                    const isCorrect = option === correctAns;
                     const showResult = score !== null;
 
                     let btnClass = "border-gray-300 bg-white hover:bg-gray-100 text-gray-700";
