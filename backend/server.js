@@ -11,7 +11,7 @@ const visualizerRoutes = require('./routes/visualizerRoutes');
 const articleRoutes = require('./routes/articles'); 
 const timerRoutes = require('./routes/timer'); 
 const pdfToolRoutes = require('./routes/pdfToolRoutes');
-
+const plannerRoutes = require('./routes/planner');
 // --- 2. Connect to Database ---
 connectDB();
 
@@ -55,7 +55,7 @@ app.use('/api/visualizer', visualizerRoutes);
 app.use('/api/articles', articleRoutes); 
 app.use('/api/timer', timerRoutes);
 app.use('/api/pdf-tools', pdfToolRoutes);
-
+app.use('/api/planner', plannerRoutes);
 // --- 6. Start Server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

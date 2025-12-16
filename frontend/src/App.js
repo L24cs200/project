@@ -10,8 +10,9 @@ import Summarizer from './pages/Summarizer';
 import QuizGenerator from './pages/QuizGenerator';
 import Visualizer from './pages/Visualizer';
 import PdfViewer from './pages/PdfViewer';
-import PdfTools from './pages/PdfTools';       // Imported
-import PdfToolView from './pages/PdfToolView'; // Imported
+import PdfTools from './pages/PdfTools';       
+import PdfToolView from './pages/PdfToolView'; 
+import StudyPlanner from './pages/StudyPlanner'; // ✅ NEW IMPORT
 
 // --- Layout ---
 import Layout from './components/Layout';
@@ -97,6 +98,18 @@ function App() {
           }
         />
 
+        {/* ✅ NEW: Study Planner Route */}
+        <Route 
+          path="/study-planner"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <StudyPlanner />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
         <Route 
           path="/pdf-viewer"
           element={
@@ -108,7 +121,7 @@ function App() {
           }
         />
 
-        {/* --- FIXED PDF TOOLS ROUTES (Wrapped in Layout) --- */}
+        {/* --- PDF TOOLS ROUTES --- */}
         <Route 
           path="/pdf-tools"
           element={

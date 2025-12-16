@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 // Icons
-import { FiGrid, FiFileText, FiLogOut, FiBarChart2, FiHelpCircle, FiFastForward, FiBook, FiHome } from 'react-icons/fi';
+import { FiGrid, FiFileText, FiLogOut, FiBarChart2, FiHelpCircle, FiFastForward, FiBook, FiHome, FiCalendar } from 'react-icons/fi';
 import { FaTools } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -45,6 +45,15 @@ const Sidebar = () => {
           <FiGrid className="mr-3" />
           Dashboard
         </NavLink>
+
+        {/* ✅ NEW: Study Planner Link */}
+        <NavLink
+          to="/study-planner"
+          className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
+        >
+          <FiCalendar className="mr-3" />
+          Study Planner
+        </NavLink>
         
         <NavLink
           to="/summarizer"
@@ -78,7 +87,6 @@ const Sidebar = () => {
           PDF Viewer
         </NavLink>
 
-        {/* --- NEW: PDF Tools Link (Styled to match) --- */}
         <NavLink 
             to="/pdf-tools"
             className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}
