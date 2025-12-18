@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ✅ FIXED: Pointing directly to your Live Render Backend
+// ✅ Point to your Render Backend
 const BASE_URL = 'https://project-hggd.onrender.com/api'; 
 
 const api = axios.create({

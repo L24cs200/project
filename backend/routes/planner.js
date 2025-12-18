@@ -2,61 +2,50 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth'); 
 const Task = require('../models/Task');
-const axios = require('axios'); 
+const User = require('../models/User');
 
-// --- 1. AI Feature: Break down a task ---
-router.post('/ai-breakdown', auth, async (req, res) => {
+// ================= ROUTES =================
+
+// 1. GET User Stats (Simplified / Placeholder)
+router.get('/stats', auth, async (req, res) => {
   try {
-    const { taskTitle, subject } = req.body;
-    
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ error: "No AI Key found" });
-    }
-
-    const prompt = `I am a student. Break down this task: "${taskTitle}" for the subject "${subject}" into 3-4 small, actionable sub-steps (max 5 words each). 
-    Return ONLY a raw JSON array of strings. Example: ["Read Chapter 1", "Solve 5 problems", "Review notes"].`;
-
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      { contents: [{ parts: [{ text: prompt }] }] },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    const candidate = response.data.candidates[0].content.parts[0].text;
-    let cleanJson = candidate.replace(/```json/g, '').replace(/```/g, '').trim();
-    const steps = JSON.parse(cleanJson);
-
-    res.json({ steps });
-
-  } catch (error) {
-    console.error("AI Breakdown Error:", error.message);
-    res.status(500).json({ error: "AI failed to generate steps" });
+    // Return empty stats so the frontend doesn't crash
+    res.json({
+      gamification: { xp: 0, streak: { current: 0 } },
+      habits: [],
+      activityLog: {}
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 
-// --- 2. GET all tasks ---
+// 2. GET all tasks
 router.get('/', auth, async (req, res) => {
   try {
     const tasks = await Task.find({ user: req.user.id }).sort({ dueDate: 1 });
     res.json(tasks);
   } catch (err) {
+    console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// --- 3. ADD a new task ---
+// 3. CREATE a new task
 router.post('/', auth, async (req, res) => {
   try {
-    // We now accept 'priority' from the frontend (do_first, schedule, etc.)
-    const { title, type, subject, dueDate, priority } = req.body;
+    // ✅ Added 'time' to destructuring
+    const { title, subject, dueDate, time, priority, notes } = req.body;
     
     const newTask = new Task({
       user: req.user.id,
       title,
-      type,
       subject,
       dueDate,
-      priority: priority || 'do_first' // Default to Urgent if missing
+      time: time || '', // ✅ Save time (or empty string if missing)
+      priority: priority || 'do_first',
+      notes: notes || '' 
     });
 
     const task = await newTask.save();
@@ -67,42 +56,44 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// --- 4. UPDATE Task (Drag-and-Drop & Completion) ---
-// ✅ UPDATED for Matrix Support
+// 4. UPDATE Task (Complete/Edit)
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { priority, isCompleted } = req.body;
+    // ✅ Added 'time' and 'dueDate' to destructuring
+    const { priority, isCompleted, notes, time, dueDate } = req.body;
     let task = await Task.findById(req.params.id);
     
     if (!task) return res.status(404).json({ msg: 'Task not found' });
+    if (task.user.toString() !== req.user.id) return res.status(401).json({ msg: 'Not authorized' });
+
+    // Update fields if present
+    if (priority) task.priority = priority;
+    if (notes !== undefined) task.notes = notes;
+    if (time !== undefined) task.time = time;     // ✅ Update time
+    if (dueDate) task.dueDate = dueDate;          // ✅ Allow updating date
     
-    // Check user ownership
-    if (task.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: 'Not authorized' });
-    }
-
-    // Update Priority (if dragged to new column)
-    if (priority) {
-        task.priority = priority;
-    }
-
-    // Update Completion (if marked done)
+    // Handle Completion
     if (isCompleted !== undefined) {
         task.isCompleted = isCompleted;
-    } else if (!req.body.priority && Object.keys(req.body).length === 0) {
-        // Fallback: If nothing sent, toggle completion (old behavior)
-        task.isCompleted = !task.isCompleted;
+        if (isCompleted) {
+            task.completedAt = new Date();
+        } else {
+            task.completedAt = null;
+        }
     }
 
     await task.save();
+    
+    // Return just the task
     res.json(task);
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// --- 5. DELETE Task ---
+// 5. DELETE Task
 router.delete('/:id', auth, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -117,6 +108,11 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (err) {
     res.status(500).send('Server Error');
   }
+});
+
+// 6. TOGGLE HABIT (Placeholder)
+router.post('/habit/toggle', auth, (req, res) => {
+    res.json({ message: "Habit tracking disabled" });
 });
 
 module.exports = router;

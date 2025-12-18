@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // --- Pages ---
@@ -12,10 +12,12 @@ import Visualizer from './pages/Visualizer';
 import PdfViewer from './pages/PdfViewer';
 import PdfTools from './pages/PdfTools';       
 import PdfToolView from './pages/PdfToolView'; 
-import StudyPlanner from './pages/StudyPlanner'; // ✅ NEW IMPORT
+import StudyPlanner from './pages/StudyPlanner'; 
+import FocusPage from './pages/FocusPage';
 
-// --- Layout ---
+// --- Components ---
 import Layout from './components/Layout';
+import SplashScreen from './components/SplashScreen'; // ✅ Your new Splash Screen
 
 // --- Private Route Logic ---
 const PrivateRoute = ({ children }) => {
@@ -24,6 +26,24 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  // --- 1. State for Splash Screen ---
+  const [showSplash, setShowSplash] = useState(true);
+
+  // --- 2. Timer Logic (2.5 Seconds) ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // --- 3. Render Splash Screen First ---
+  if (showSplash) {
+    return <SplashScreen />;
+  }
+
+  // --- 4. Render Main Application ---
   return (
     <Router>
       <Routes>
@@ -34,6 +54,7 @@ function App() {
 
         {/* -------------------- PRIVATE ROUTES -------------------- */}
         
+        {/* Root Redirects to Home */}
         <Route 
           path="/" 
           element={
@@ -43,6 +64,7 @@ function App() {
           } 
         />
 
+        {/* Home Feed */}
         <Route 
           path="/home"
           element={
@@ -54,6 +76,7 @@ function App() {
           }
         />
 
+        {/* Dashboard */}
         <Route 
           path="/dashboard"
           element={
@@ -65,6 +88,61 @@ function App() {
           }
         />
 
+        {/* Study Planner (and alias /planner) */}
+        <Route 
+          path="/study-planner"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <StudyPlanner />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/planner" 
+          element={
+            <PrivateRoute>
+              <Layout>
+                <StudyPlanner />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* PDF Tools & Viewer */}
+        <Route 
+          path="/pdf-viewer"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfViewer />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/pdf-tools"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfTools />
+              </Layout>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/pdf-tools/:toolId" 
+          element={
+            <PrivateRoute>
+              <Layout>
+                <PdfToolView />
+              </Layout>
+            </PrivateRoute>
+          } 
+        />
+
+        {/* AI Tools */}
         <Route 
           path="/summarizer"
           element={
@@ -75,7 +153,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route 
           path="/quiz-generator"
           element={
@@ -86,7 +163,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route 
           path="/visualizer"
           element={
@@ -98,50 +174,14 @@ function App() {
           }
         />
 
-        {/* ✅ NEW: Study Planner Route */}
+        {/* Focus Mode (No Layout) */}
         <Route 
-          path="/study-planner"
+          path="/focus"
           element={
             <PrivateRoute>
-              <Layout>
-                <StudyPlanner />
-              </Layout>
+               <FocusPage />
             </PrivateRoute>
           }
-        />
-
-        <Route 
-          path="/pdf-viewer"
-          element={
-            <PrivateRoute>
-              <Layout>
-                <PdfViewer />
-              </Layout>
-            </PrivateRoute>
-          }
-        />
-
-        {/* --- PDF TOOLS ROUTES --- */}
-        <Route 
-          path="/pdf-tools"
-          element={
-            <PrivateRoute>
-              <Layout>
-                <PdfTools />
-              </Layout>
-            </PrivateRoute>
-          } 
-        />
-        
-        <Route 
-          path="/pdf-tools/:toolId" 
-          element={
-            <PrivateRoute>
-              <Layout>
-                <PdfToolView />
-              </Layout>
-            </PrivateRoute>
-          } 
         />
 
       </Routes>

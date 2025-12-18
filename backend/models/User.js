@@ -1,27 +1,40 @@
-// backend/models/User.js
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    // No unique constraint here, which is correct!
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+  
+  // --- 1. GAMIFICATION (Scores & Streak) ---
+  gamification: {
+    xp: { type: Number, default: 0 },
+    streak: {
+      current: { type: Number, default: 0 },
+      longest: { type: Number, default: 0 },
+      lastActiveDate: { type: Date, default: null },
+      freezes: { type: Number, default: 1 }
+    }
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true, // Keep this! Emails must be unique.
+
+  // --- 2. HABITS (Daily Rituals) ---
+  habits: {
+    type: [{
+      id: String,
+      name: String,
+      icon: String, 
+      completed: { type: Boolean, default: false }
+    }],
+    // This default ensures NEW users get habits immediately
+    default: [
+      { id: 'read', name: 'Read 15m', icon: 'BookOpen', completed: false },
+      { id: 'code', name: 'Code 1h', icon: 'Code', completed: false },
+      { id: 'social', name: 'No Socials', icon: 'Coffee', completed: false }
+    ]
   },
-  password: {
-    type: String,
-    required: true,
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
+
+  // --- 3. ACTIVITY CHART ---
+  activityLog: { type: Map, of: Number, default: {} } 
 });
 
-// ✅ FIX: Changed 'users' to 'users_new'
-// This creates a brand new table in the database, ignoring the old broken rules.
-module.exports = mongoose.model('user', UserSchema, 'users_new');
+module.exports = mongoose.model('user', UserSchema);

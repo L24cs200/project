@@ -7,18 +7,57 @@ body {
   @apply bg-slate-50 font-sans antialiased;
 }
 
-/* Custom spinner animation for loading states */
+/* --- UTILITIES LAYER --- */
 @layer utilities {
+  /* Custom spinner animation for loading states */
   .spinner {
     animation: spin 1s linear infinite;
   }
 
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+  /* ✅ NEW: Fade In Animation for Page Transitions */
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out forwards;
   }
+}
+
+/* --- KEYFRAMES --- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ✅ NEW: Fade In Keyframes (Slide up + Fade) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px); /* Starts slightly lower */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);    /* Settles into place */
+  }
+}
+
+/* --- CUSTOM SCROLLBAR (Chrome/Safari/Edge) --- */
+/* This gives the entire app a "Pro" feel by hiding the default gray bar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
 }
