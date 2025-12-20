@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import api from '../services/api'; 
-// ✅ FIX: Change 'react-icons/fa' to 'react-icons/fi'
-import { FiUploadCloud, FiFileText, FiCpu, FiCheckCircle, FiAlertCircle, FiLoader, FiTrash2 } from 'react-icons/fi';
+import { 
+  FiUploadCloud, 
+  FiFileText, 
+  FiCpu, 
+  FiAlertCircle, 
+  FiLoader, 
+  FiTrash2, 
+  FiCheckCircle 
+} from 'react-icons/fi';
 
 const QuizGenerator = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -11,7 +18,7 @@ const QuizGenerator = () => {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [score, setScore] = useState(null);
 
-  // 1. Handle File Selection
+  // --- 1. Handle File Selection ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
@@ -23,7 +30,7 @@ const QuizGenerator = () => {
     }
   };
 
-  // 2. Generate Quiz
+  // --- 2. Generate Quiz API Call ---
   const handleGenerate = async () => {
     if (!selectedFile) return;
 
@@ -32,26 +39,16 @@ const QuizGenerator = () => {
     setScore(null);
     setSelectedAnswers({});
 
-    // Create FormData for file upload
     const formData = new FormData();
     formData.append('pdfFile', selectedFile);
 
     try {
-      // The backend route is likely '/api/quiz/generate' or just '/api/quiz'
-      // Based on your previous backend code (if using Hugging Face), check your route.
-      // If your server.js uses app.use('/api/quiz', quizRoutes) and router is router.post('/generate'...)
-      // Then the URL below should be '/quiz/generate'.
-      // If it is just router.post('/', ...) then use '/quiz'.
-      
-      // I will assume '/quiz/generate' for safety based on previous steps, 
-      // but if you kept the simple one, change this to '/quiz'.
+      // Sending request to Backend
       const response = await api.post('/quiz/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
-      console.log("Quiz Received:", response.data);
-      
-      // Handle both possible response structures (array or object with quiz key)
+      // Handle response structure
       const data = response.data.quiz || response.data;
       
       if (Array.isArray(data)) {
@@ -62,13 +59,13 @@ const QuizGenerator = () => {
 
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.msg || err.response?.data?.error || 'Server error. Please check your backend connection.');
+      setError(err.response?.data?.msg || 'Server error. Please ensure the backend is running.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. Handle Answers & Scoring
+  // --- 3. Handle Quiz Logic ---
   const handleOptionSelect = (qIndex, option) => {
     setSelectedAnswers({ ...selectedAnswers, [qIndex]: option });
   };
@@ -76,133 +73,199 @@ const QuizGenerator = () => {
   const handleSubmit = () => {
     let newScore = 0;
     quizData.forEach((q, idx) => {
-      if (selectedAnswers[idx] === q.answer || selectedAnswers[idx] === q.correctAnswer) newScore++;
+      // Check against both possible key names from AI (answer or correctAnswer)
+      const correct = q.answer || q.correctAnswer;
+      if (selectedAnswers[idx] === correct) newScore++;
     });
     setScore(newScore);
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto min-h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-screen bg-gray-50 text-gray-800 font-sans animate-fadeIn">
       
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-indigo-600 flex items-center justify-center gap-2">
-          <FiCpu /> AI Quiz Generator
+      {/* Page Header */}
+      <div className="mb-10 text-center">
+        <div className="inline-flex items-center justify-center p-3 bg-indigo-100 text-indigo-600 rounded-full mb-4">
+           <FiCpu size={32} />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">
+          AI Quiz Generator
         </h1>
-        <p className="text-gray-500 mt-2">Upload a PDF lecture or article to generate a practice test.</p>
+        <p className="text-slate-500 max-w-xl mx-auto">
+          Upload your study notes or lectures (PDF), and our AI will instantly create a practice test to check your understanding.
+        </p>
       </div>
 
       {/* --- Upload Section --- */}
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6">
+      <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-gray-200 mb-8 transition-all hover:shadow-md">
         {!selectedFile ? (
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-10 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer relative">
-            <input type="file" accept=".pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-            <FiUploadCloud size={48} className="text-indigo-400 mb-4" />
-            <p className="text-lg font-medium text-gray-700">Click to upload PDF</p>
-            <p className="text-sm text-gray-400 mt-1">Limit 10MB • .pdf only</p>
+          <div className="relative border-2 border-dashed border-indigo-200 rounded-xl p-12 flex flex-col items-center justify-center bg-indigo-50/30 hover:bg-indigo-50/60 transition-colors cursor-pointer group">
+            <input 
+              type="file" 
+              accept=".pdf" 
+              onChange={handleFileChange} 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+            />
+            <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                <FiUploadCloud size={40} className="text-indigo-500" />
+            </div>
+            <p className="text-lg font-bold text-slate-700">Click to upload PDF</p>
+            <p className="text-sm text-slate-400 mt-1">Maximum size: 10MB</p>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-indigo-200 rounded-xl p-6 flex flex-col items-center justify-center bg-indigo-50/50">
-            <FiFileText size={40} className="text-indigo-600 mb-2" />
-            <p className="font-medium text-gray-800 text-center">{selectedFile.name}</p>
-            <button onClick={() => setSelectedFile(null)} className="mt-4 text-red-500 text-sm flex items-center gap-1 hover:underline">
-              <FiTrash2 /> Remove File
+          <div className="border border-indigo-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between bg-indigo-50/40">
+            <div className="flex items-center gap-4 mb-4 md:mb-0">
+                <div className="bg-indigo-100 p-3 rounded-lg text-indigo-600">
+                    <FiFileText size={28} />
+                </div>
+                <div>
+                    <p className="font-bold text-slate-800">{selectedFile.name}</p>
+                    <p className="text-xs text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+            </div>
+            <button 
+                onClick={() => setSelectedFile(null)} 
+                className="text-red-500 text-sm font-semibold flex items-center gap-2 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+            >
+              <FiTrash2 /> Remove
             </button>
           </div>
         )}
 
+        {/* Error Message */}
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 text-sm">
-            <FiAlertCircle /> {error}
+          <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-3 border border-red-100">
+            <FiAlertCircle size={20} />
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
+        {/* Generate Button */}
         <button
           onClick={handleGenerate}
           disabled={loading || !selectedFile}
-          className={`mt-6 w-full py-3.5 rounded-lg font-bold text-white shadow-lg transition-all flex items-center justify-center gap-3
-            ${loading || !selectedFile ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}
+          className={`mt-6 w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-3 text-lg
+            ${loading || !selectedFile 
+              ? 'bg-slate-300 cursor-not-allowed shadow-none' 
+              : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-indigo-200 hover:-translate-y-1 active:scale-[0.99]'}
           `}
         >
-          {loading ? <><FiLoader className="animate-spin" /> Generating Questions...</> : 'Generate Quiz'}
+          {loading ? (
+            <>
+              <FiLoader className="animate-spin" size={24} /> 
+              <span>Analyzing Document...</span>
+            </>
+          ) : (
+            <>
+              <FiCpu size={24} />
+              <span>Generate Quiz</span>
+            </>
+          )}
         </button>
       </div>
 
       {/* --- Quiz Display Section --- */}
       {quizData && (
-        <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-indigo-500 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Practice Quiz</h2>
-            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">{quizData.length} Questions</span>
-          </div>
-          
-          <div className="space-y-6">
-            {quizData.map((q, qIndex) => (
-              <div key={qIndex} className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                <p className="font-semibold text-lg mb-4 text-gray-800">
-                  <span className="text-indigo-600 mr-2">{qIndex + 1}.</span>
-                  {q.question}
-                </p>
+        <div className="animate-fadeIn">
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100 relative overflow-hidden">
+            
+            {/* Decoration Top */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {q.options.map((option, oIndex) => {
-                    const isSelected = selectedAnswers[qIndex] === option;
-                    const correctAns = q.answer || q.correctAnswer;
-                    const isCorrect = option === correctAns;
-                    const showResult = score !== null;
+            <div className="flex justify-between items-end mb-8 border-b border-gray-100 pb-4">
+              <div>
+                 <h2 className="text-2xl font-bold text-slate-800">Practice Quiz</h2>
+                 <p className="text-slate-400 text-sm mt-1">Select the best answer for each question.</p>
+              </div>
+              <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full font-bold text-sm">
+                {quizData.length} Questions
+              </span>
+            </div>
+            
+            <div className="space-y-8">
+              {quizData.map((q, qIndex) => (
+                <div key={qIndex} className="bg-gray-50/50 rounded-xl p-2 md:p-4">
+                  <p className="font-bold text-lg mb-4 text-slate-800 flex gap-3">
+                    <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 text-sm">
+                        {qIndex + 1}
+                    </span>
+                    {q.question}
+                  </p>
 
-                    let btnClass = "border-gray-300 bg-white hover:bg-gray-100 text-gray-700";
-                    
-                    if (showResult) {
-                      if (isCorrect) btnClass = "bg-green-100 border-green-500 text-green-800 font-bold ring-1 ring-green-500";
-                      else if (isSelected && !isCorrect) btnClass = "bg-red-100 border-red-500 text-red-800 ring-1 ring-red-500";
-                      else btnClass = "opacity-50";
-                    } else if (isSelected) {
-                      btnClass = "bg-indigo-50 border-indigo-500 text-indigo-700 font-semibold ring-1 ring-indigo-500";
-                    }
+                  <div className="grid grid-cols-1 gap-3 ml-0 md:ml-11">
+                    {q.options.map((option, oIndex) => {
+                      const isSelected = selectedAnswers[qIndex] === option;
+                      const correctAns = q.answer || q.correctAnswer;
+                      const isCorrect = option === correctAns;
+                      const showResult = score !== null;
 
-                    return (
-                      <button
-                        key={oIndex}
-                        onClick={() => !showResult && handleOptionSelect(qIndex, option)}
-                        disabled={showResult}
-                        className={`p-3 text-left border rounded-lg transition-all text-sm ${btnClass}`}
-                      >
-                        <span className="inline-block w-6 font-bold opacity-50">{String.fromCharCode(65 + oIndex)}.</span> 
-                        {option}
-                      </button>
-                    );
-                  })}
+                      // Logic for button colors
+                      let btnClass = "border-gray-200 bg-white hover:bg-gray-50 text-slate-600";
+                      
+                      if (showResult) {
+                        if (isCorrect) btnClass = "bg-green-50 border-green-500 text-green-700 font-bold ring-1 ring-green-500";
+                        else if (isSelected && !isCorrect) btnClass = "bg-red-50 border-red-500 text-red-700 font-medium ring-1 ring-red-500";
+                        else btnClass = "opacity-40 grayscale";
+                      } else if (isSelected) {
+                        btnClass = "bg-indigo-50 border-indigo-500 text-indigo-700 font-semibold ring-1 ring-indigo-500 shadow-sm";
+                      }
+
+                      return (
+                        <button
+                          key={oIndex}
+                          onClick={() => !showResult && handleOptionSelect(qIndex, option)}
+                          disabled={showResult}
+                          className={`relative p-4 text-left border rounded-xl transition-all duration-200 flex items-center gap-3 ${btnClass}`}
+                        >
+                          <span className={`flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold border ${isSelected || (showResult && isCorrect) ? 'border-current' : 'border-gray-300 text-gray-400'}`}>
+                            {String.fromCharCode(65 + oIndex)}
+                          </span>
+                          <span>{option}</span>
+                          
+                          {showResult && isCorrect && <FiCheckCircle className="absolute right-4 text-green-600" size={20} />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Footer / Submit */}
-          <div className="mt-8 pt-6 border-t flex flex-col items-center">
-            {score === null ? (
-              <button
-                onClick={handleSubmit}
-                disabled={Object.keys(selectedAnswers).length < quizData.length}
-                className="w-full md:w-1/3 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-md"
-              >
-                Submit Answers
-              </button>
-            ) : (
-              <div className="text-center w-full bg-gray-100 p-6 rounded-xl">
-                <p className="text-3xl font-bold mb-2">
-                  Score: <span className={score === quizData.length ? "text-green-600" : "text-indigo-600"}>{score} / {quizData.length}</span>
-                </p>
-                <p className="text-gray-500 mb-4">{score === quizData.length ? "Perfect Score! 🎉" : "Keep practicing!"}</p>
-                
-                <button 
-                  onClick={() => { setQuizData(null); setScore(null); setSelectedFile(null); }}
-                  className="text-indigo-600 hover:text-indigo-800 font-bold underline"
+            {/* Footer / Results */}
+            <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col items-center animate-fadeIn">
+              {score === null ? (
+                <button
+                  onClick={handleSubmit}
+                  disabled={Object.keys(selectedAnswers).length < quizData.length}
+                  className="w-full md:w-1/2 py-4 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-200 hover:shadow-xl hover:-translate-y-1"
                 >
-                  Start New Quiz
+                  Submit & Check Answers
                 </button>
-              </div>
-            )}
+              ) : (
+                <div className="text-center w-full bg-gradient-to-b from-indigo-50 to-white p-8 rounded-2xl border border-indigo-100 shadow-sm">
+                  <p className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Final Result</p>
+                  <p className="text-5xl font-extrabold mb-4 text-slate-800">
+                    <span className={score === quizData.length ? "text-green-500" : "text-indigo-600"}>
+                        {Math.round((score / quizData.length) * 100)}%
+                    </span>
+                  </p>
+                  <p className="text-lg font-medium text-slate-600 mb-6">
+                    You scored {score} out of {quizData.length} correctly.
+                    <br />
+                    <span className="text-sm text-slate-400">
+                        {score === quizData.length ? "Amazing work! 🎉" : "Review the answers above to improve."}
+                    </span>
+                  </p>
+                  
+                  <button 
+                    onClick={() => { setQuizData(null); setScore(null); setSelectedFile(null); }}
+                    className="px-8 py-3 bg-white border border-gray-300 text-slate-700 font-bold rounded-lg hover:bg-gray-50 hover:text-slate-900 transition-colors shadow-sm"
+                  >
+                    Start New Quiz
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

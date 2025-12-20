@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FaCloudUploadAlt, FaFilePdf, FaFileImage, FaFileWord, FaCheckCircle, FaSpinner, FaTimes, FaRedo, FaUndo } from 'react-icons/fa';
+// ✅ Updated Icons
+import { 
+  FiUploadCloud, FiFile, FiImage, FiFileText, 
+  FiCheckCircle, FiLoader, FiX, FiRotateCw, FiScissors, FiArrowLeft
+} from 'react-icons/fi';
 import api from '../services/api'; 
 
 const PdfToolView = () => {
@@ -118,100 +122,150 @@ const PdfToolView = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-       <button onClick={() => navigate('/pdf-tools')} className="text-indigo-600 mb-4 hover:underline font-medium">
-         &larr; Back to Tools
+    <div className="p-6 md:p-10 bg-gray-50 min-h-screen font-sans animate-fadeIn">
+       
+       <button 
+         onClick={() => navigate('/pdf-tools')} 
+         className="flex items-center text-slate-500 mb-6 hover:text-indigo-600 font-medium transition-colors"
+       >
+         <FiArrowLeft className="mr-2" /> Back to Tools
        </button>
        
-       <div className="bg-white rounded-xl shadow-lg p-10 max-w-4xl mx-auto border border-gray-200">
-          
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 capitalize text-center">
-            {toolNames[toolId] || toolId.replace('-', ' ')}
-          </h1>
-          <p className="text-gray-500 mb-8 text-center">
-             {toolId === 'img-to-pdf' ? "Convert JPG/PNG images into a single PDF." : 
-              toolId === 'pdf-to-word' ? "Convert PDF text into a Word document." :
-              "Process your documents efficiently."}
-          </p>
+       <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 max-w-4xl mx-auto border border-gray-200">
+         
+         <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2 capitalize tracking-tight">
+                {toolNames[toolId] || toolId.replace('-', ' ')}
+            </h1>
+            <p className="text-slate-500 text-lg">
+                {toolId === 'img-to-pdf' ? "Convert JPG/PNG images into a single professional PDF." : 
+                toolId === 'pdf-to-word' ? "Convert PDF text into an editable Word document." :
+                toolId === 'merge' ? "Combine multiple PDFs into one organized file." :
+                "Process your documents efficiently and securely."}
+            </p>
+         </div>
 
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-center border border-red-100 font-medium">
-              {error}
-            </div>
-          )}
+         {error && (
+           <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center border border-red-100 font-medium flex items-center justify-center gap-2">
+             <FiX className="text-xl" /> {error}
+           </div>
+         )}
 
-          {success ? (
-            <div className="text-center py-10 animation-fade-in">
-              <FaCheckCircle className="text-6xl text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Success!</h2>
-              <p className="text-gray-600 mb-6">Your file has been downloaded.</p>
-              <button onClick={() => setSuccess(false)} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
-                Process More
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* UPLOAD AREA */}
-              <div 
-                {...getRootProps()} 
-                className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors
-                  ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'}`}
-              >
-                <input {...getInputProps()} />
-                <FaCloudUploadAlt className="text-5xl text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">
-                    {toolId === 'img-to-pdf' ? "Drag & drop Images" : "Drag & drop PDF here"}
-                </p>
-              </div>
+         {success ? (
+           <div className="text-center py-12 animate-fadeIn bg-green-50 rounded-2xl border border-green-100">
+             <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+                <FiCheckCircle className="text-4xl text-green-600" />
+             </div>
+             <h2 className="text-2xl font-bold text-slate-800 mb-2">Success!</h2>
+             <p className="text-slate-600 mb-8">Your file has been processed and downloaded.</p>
+             <button 
+                onClick={() => setSuccess(false)} 
+                className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 hover:-translate-y-1"
+             >
+               Process More Files
+             </button>
+           </div>
+         ) : (
+           <>
+             {/* UPLOAD AREA */}
+             <div 
+               {...getRootProps()} 
+               className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200 group
+                 ${isDragActive 
+                    ? 'border-indigo-500 bg-indigo-50 scale-[1.02]' 
+                    : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'}`}
+             >
+               <input {...getInputProps()} />
+               <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-100 transition-colors">
+                  <FiUploadCloud className="text-3xl text-slate-400 group-hover:text-indigo-500 transition-colors" />
+               </div>
+               <p className="text-lg font-bold text-slate-700 group-hover:text-indigo-700">
+                   {toolId === 'img-to-pdf' ? "Drag & drop Images here" : "Drag & drop PDF here"}
+               </p>
+               <p className="text-sm text-slate-400 mt-1">or click to browse files</p>
+             </div>
 
-              {/* FILE LIST */}
-              {files.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Selected Files ({files.length})</h3>
-                  <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                    {files.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div className="flex items-center gap-3">
-                          {toolId === 'img-to-pdf' ? <FaFileImage className="text-purple-500" /> : 
-                           toolId === 'pdf-to-word' ? <FaFileWord className="text-blue-600" /> :
-                           <FaFilePdf className="text-red-500" />}
-                          <span className="text-gray-700 text-sm truncate max-w-xs">{file.name}</span>
-                        </div>
-                        <button onClick={(e) => {
-                             e.stopPropagation();
-                             setFiles(files.filter((_, i) => i !== idx));
-                        }} className="text-gray-400 hover:text-red-500"><FaTimes /></button>
-                      </div>
-                    ))}
-                  </div>
+             {/* FILE LIST */}
+             {files.length > 0 && (
+               <div className="mt-10 animate-fadeIn">
+                 <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-700">Selected Files ({files.length})</h3>
+                    <button onClick={() => setFiles([])} className="text-sm text-red-500 hover:underline font-medium">Clear All</button>
+                 </div>
+                 
+                 <div className="space-y-3 mb-8 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                   {files.map((file, idx) => (
+                     <div key={idx} className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 hover:border-indigo-100 transition-colors">
+                       <div className="flex items-center gap-4 overflow-hidden">
+                         <div className="bg-white p-2 rounded-lg border border-slate-200">
+                            {toolId === 'img-to-pdf' ? <FiImage className="text-purple-500 text-xl" /> : 
+                             toolId === 'pdf-to-word' ? <FiFileText className="text-blue-600 text-xl" /> :
+                             <FiFile className="text-red-500 text-xl" />}
+                         </div>
+                         <div className="flex flex-col min-w-0">
+                            <span className="text-slate-700 font-medium truncate">{file.name}</span>
+                            <span className="text-xs text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                         </div>
+                       </div>
+                       <button 
+                         onClick={(e) => {
+                            e.stopPropagation();
+                            setFiles(files.filter((_, i) => i !== idx));
+                         }} 
+                         className="p-2 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                       >
+                         <FiX />
+                       </button>
+                     </div>
+                   ))}
+                 </div>
 
-                  {/* TOOL SPECIFIC INPUTS */}
-                  {toolId === 'split' && (
-                      <div className="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                          <label className="block text-indigo-900 font-semibold mb-2">Pages to Extract:</label>
-                          <input type="text" placeholder="e.g. 1-5" value={pageRange} onChange={(e) => setPageRange(e.target.value)} className="w-full p-3 border border-gray-300 rounded-md" />
-                      </div>
-                  )}
-                  {toolId === 'rotate' && (
-                      <div className="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100 text-center">
-                          <div className="flex justify-center gap-4">
-                              <button onClick={() => setRotation(90)} className="px-4 py-2 bg-white border rounded">Right 90°</button>
-                              <button onClick={() => setRotation(180)} className="px-4 py-2 bg-white border rounded">180°</button>
-                          </div>
-                      </div>
-                  )}
+                 {/* TOOL SPECIFIC INPUTS */}
+                 {toolId === 'split' && (
+                     <div className="mb-8 bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+                         <label className="block text-indigo-900 font-bold mb-3 flex items-center gap-2">
+                             <FiScissors /> Pages to Extract:
+                         </label>
+                         <input 
+                            type="text" 
+                            placeholder="e.g. 1-5, 8, 11-13" 
+                            value={pageRange} 
+                            onChange={(e) => setPageRange(e.target.value)} 
+                            className="w-full p-4 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-lg font-mono" 
+                         />
+                         <p className="text-xs text-indigo-400 mt-2">Enter page numbers or ranges separated by commas.</p>
+                     </div>
+                 )}
+                 {toolId === 'rotate' && (
+                     <div className="mb-8 bg-indigo-50 p-6 rounded-xl border border-indigo-100 text-center">
+                         <label className="block text-indigo-900 font-bold mb-4 flex items-center justify-center gap-2">
+                             <FiRotateCw /> Rotation Angle
+                         </label>
+                         <div className="flex justify-center gap-4">
+                             {[90, 180, 270].map((deg) => (
+                                 <button 
+                                    key={deg}
+                                    onClick={() => setRotation(deg)} 
+                                    className={`px-6 py-3 rounded-xl font-bold border transition-all ${rotation === deg ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-indigo-200 hover:bg-indigo-50'}`}
+                                 >
+                                    {deg}°
+                                 </button>
+                             ))}
+                         </div>
+                     </div>
+                 )}
 
-                  <button 
-                    onClick={handleProcess}
-                    disabled={loading}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-70 flex items-center justify-center gap-2"
-                  >
-                    {loading ? <><FaSpinner className="animate-spin" /> Processing...</> : "Convert / Process"}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                 <button 
+                   onClick={handleProcess}
+                   disabled={loading}
+                   className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                 >
+                   {loading ? <><FiLoader className="animate-spin" /> Processing...</> : "Convert & Download"}
+                 </button>
+               </div>
+             )}
+           </>
+         )}
        </div>
     </div>
   );

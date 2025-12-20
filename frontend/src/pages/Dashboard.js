@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti';
 import TaskCard from '../components/TaskCard';
 import Visualizer from './Visualizer'; 
 
-// Import the new clearAllTasks function (or implement logic inline)
+// Import services
 import { 
   fetchTasks, 
   updateTask, 
@@ -36,8 +36,6 @@ const Dashboard = () => {
   const loadTasksData = async () => {
     try {
       const tasksData = await fetchTasks();
-      // Debugging: Check console to see what the "Ghost Tasks" are
-      console.log("Loaded Tasks:", tasksData); 
       setTasks(tasksData);
       setLoading(false);
     } catch (error) {
@@ -63,13 +61,11 @@ const Dashboard = () => {
     }
   };
   
-  // --- NEW: RESET FUNCTION ---
   const handleResetDashboard = async () => {
     if (window.confirm("⚠️ This will delete ALL tasks (Pending & Completed). Are you sure?")) {
         try {
-            // Delete all tasks one by one
             await Promise.all(tasks.map(t => deleteTask(t._id)));
-            setTasks([]); // Clear state immediately
+            setTasks([]); 
             alert("Dashboard Reset!");
         } catch (error) {
             console.error("Error resetting:", error);
@@ -84,7 +80,7 @@ const Dashboard = () => {
   const filterTasks = (priority) => tasks.filter(t => t.priority === priority && !t.isCompleted);
 
   return (
-    <div className="p-4 md:p-8 space-y-8 bg-gray-50 min-h-screen font-sans">
+    <div className="p-4 md:p-8 space-y-8 bg-gray-50 min-h-screen font-sans animate-fadeIn">
       
       {/* HEADER */}
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center">
@@ -128,7 +124,9 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ✅ CHANGED: Grid layout updated to 2 columns for wider cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
           <div className="space-y-3">
             <h3 className="font-bold text-red-600 bg-red-50 p-3 rounded-lg text-center border border-red-100 shadow-sm">🔥 Do First</h3>
             {filterTasks('do_first').map(task => (

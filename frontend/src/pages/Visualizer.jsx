@@ -1,18 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api'; // <--- UPDATED: Import central API helper
+import api from '../services/api'; 
+import { 
+  FiPlay, 
+  FiPause, 
+  FiRotateCcw, 
+  FiFastForward, 
+  FiLoader, 
+  FiZap,
+  FiShuffle // Added Shuffle Icon
+} from 'react-icons/fi';
 
 /**
  * Visualizer Component
  * A self-contained speed reading (RSVP) module.
  */
 export default function Visualizer() {
-  // --- Motivational messages ---
-  const messages = [
-    'Fuel your goals — type here to level up 💪',
-    'Sharpen your focus — your journey starts here 🚀',
-    'Train your brain — read smarter, not harder ⚡',
-    'Unlock your potential — one word at a time 📖',
-    'Boost your speed — your mind is limitless 🌟',
+  
+  // --- Motivational Passages (New Content) ---
+  const passages = [
+    "Success is not final, failure is not fatal: it is the courage to continue that counts. Every small step you take today builds the empire of your tomorrow. Stay focused, stay hungry.",
+    "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle. As with all matters of the heart, you'll know when you find it.",
+    "Your time is limited, so don't waste it living someone else's life. Don't be trapped by dogma – which is living with the results of other people's thinking.",
+    "Believe you can and you're halfway there. The future belongs to those who believe in the beauty of their dreams. Your potential is limitless if you just keep pushing.",
+    "Education is the most powerful weapon which you can use to change the world. Learning never exhausts the mind. It is the only thing the mind never exhausts, never fears, and never regrets.",
+    "It does not matter how slowly you go as long as you do not stop. Confucius said this centuries ago, and it remains true today. Consistency beats intensity every single time."
   ];
 
   const quotes = [
@@ -23,9 +34,10 @@ export default function Visualizer() {
     'You’re not just reading — you’re evolving 🧠',
   ];
 
+  // Initialize with a random passage
   const [inputText, setInputText] = useState(() => {
-    const random = Math.floor(Math.random() * messages.length);
-    return messages[random];
+    const random = Math.floor(Math.random() * passages.length);
+    return passages[random];
   });
 
   const [quote, setQuote] = useState(() => {
@@ -35,10 +47,7 @@ export default function Visualizer() {
 
   // --- State Variables ---
   const [chunks, setChunks] = useState([]);
-  
-  // This is the default word shown before you start
   const [currentChunk, setCurrentChunk] = useState('Visualizer'); 
-  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [wpm, setWpm] = useState(300);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -48,6 +57,15 @@ export default function Visualizer() {
   const intervalRef = useRef(null);
 
   // --- Helper Functions ---
+  
+  // New: Shuffle Function
+  const shufflePassage = () => {
+    const random = Math.floor(Math.random() * passages.length);
+    setInputText(passages[random]);
+    setChunks([]); // Reset chunks so user has to click "Load" again
+    setCurrentChunk('Visualizer');
+  };
+
   const calculateDelay = () => {
     if (wpm === 0) return null;
     return 60000 / wpm;
@@ -60,14 +78,11 @@ export default function Visualizer() {
     setCurrentChunk('Loading...');
 
     try {
-      // <--- UPDATED: Use api.post instead of fetch
-      // URL becomes '/visualizer/chunks' (api.js handles the domain)
       const response = await api.post('/visualizer/chunks', {
         text: inputText,
         chunkSize: 1,
       });
 
-      // Axios returns the data directly in response.data
       const data = response.data;
 
       if (data.chunks && data.chunks.length > 0) {
@@ -137,140 +152,112 @@ export default function Visualizer() {
 
   // --- Render ---
   return (
-    <div
-      style={{
-        fontFamily:
-          'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        width: '100%',
-        backgroundColor: '#f9fafb',
-        borderRadius: '12px',
-        border: '1px solid #e5e7eb',
-        padding: '1.5rem',
-      }}
-    >
-      <div
-        style={{
-          textAlign: 'center',
-          marginBottom: '1rem',
-          fontSize: '1.1rem',
-          fontWeight: '500',
-          color: '#2563eb',
-        }}
-      >
-        {quote}
+    <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 animate-fadeIn">
+      
+      {/* Header Quote */}
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
+            <FiZap className="fill-current" /> 
+            <span>Speed Reader</span>
+        </div>
+        <p className="text-slate-500 font-medium text-lg">
+           "{quote}"
+        </p>
       </div>
 
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
-          padding: '3rem 1rem',
-          marginBottom: '1.5rem',
-          textAlign: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '3rem',
-            fontWeight: 'bold',
-            color: '#1f2937',
-          }}
-        >
+      {/* Main Display Box (Dark Mode for High Contrast) */}
+      <div className="bg-slate-900 rounded-2xl h-64 flex items-center justify-center mb-6 shadow-inner relative overflow-hidden group">
+        
+        {/* Subtle Background Effect */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+        </div>
+
+        <span className="text-5xl md:text-7xl font-extrabold text-white tracking-wide relative z-10 transition-all transform group-hover:scale-105 duration-200">
           {currentChunk}
         </span>
       </div>
 
-      <textarea
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        placeholder="Fuel your goals — type here to level up 💪"
-        disabled={isLoading}
-        style={{
-          width: '100%',
-          minHeight: '100px',
-          boxSizing: 'border-box',
-          padding: '0.75rem',
-          border: '1px solid #d1d5db',
-          borderRadius: '8px',
-          fontSize: '0.9rem',
-          marginBottom: '1rem',
-          resize: 'vertical',
-        }}
-      />
-
-      {error && (
-        <div
-          style={{
-            color: '#ef4444',
-            backgroundColor: '#fee2e2',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            textAlign: 'center',
-            fontSize: '0.9rem',
-          }}
+      {/* Input Text Area with Shuffle Button */}
+      <div className="relative mb-4">
+        <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Type or paste text here..."
+            disabled={isLoading}
+            className="w-full min-h-[100px] p-4 pr-12 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-700 resize-none"
+        />
+        <button 
+            onClick={shufflePassage}
+            title="Load Random Passage"
+            className="absolute top-3 right-3 p-2 bg-white border border-gray-200 rounded-lg text-slate-400 hover:text-indigo-600 hover:border-indigo-200 shadow-sm transition-all"
         >
+            <FiShuffle size={18} />
+        </button>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-medium text-center border border-red-100">
           {error}
         </div>
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.75rem',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-        }}
-      >
+      {/* Controls */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        
+        {/* Load Button */}
         <button
           onClick={fetchChunks}
           disabled={isLoading || inputText.trim() === ''}
-          style={buttonStyle(isLoading || inputText.trim() === '')}
+          className="flex-1 py-3 px-6 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
+          {isLoading ? <FiLoader className="animate-spin" /> : <FiFastForward />}
           {isLoading ? 'Loading...' : 'Load Text'}
         </button>
 
+        {/* Play/Pause Button */}
         {isPlaying ? (
-          <button onClick={pauseReading} style={buttonStyle()}>
-            Pause
+          <button 
+            onClick={pauseReading} 
+            className="flex-[2] py-3 px-6 bg-yellow-500 text-white font-bold rounded-xl hover:bg-yellow-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-200"
+          >
+            <FiPause size={20} className="fill-current" /> Pause
           </button>
         ) : (
           <button
             onClick={startReading}
             disabled={isLoading || chunks.length === 0}
-            style={buttonStyle(isLoading || chunks.length === 0)}
+            className={`flex-[2] py-3 px-6 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-lg shadow-lg
+                ${isLoading || chunks.length === 0 
+                    ? 'bg-slate-300 text-white cursor-not-allowed shadow-none' 
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 hover:-translate-y-1'}`
+            }
           >
-            Start
+            <FiPlay size={20} className="fill-current ml-1" /> Start
           </button>
         )}
 
+        {/* Reset Button */}
         <button
           onClick={resetReading}
           disabled={isLoading || chunks.length === 0}
-          style={buttonStyle(isLoading || chunks.length === 0)}
+          className="flex-1 py-3 px-6 bg-white border border-gray-300 text-slate-600 font-bold rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          Reset
+          <FiRotateCcw /> Reset
         </button>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-        }}
-      >
-        <label
-          htmlFor="wpm-slider"
-          style={{
-            fontSize: '0.9rem',
-            fontWeight: '500',
-            color: '#374151',
-          }}
-        >
-          Speed: {wpm} WPM
-        </label>
+      {/* Speed Slider */}
+      <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+        <div className="flex justify-between items-center mb-2">
+            <label htmlFor="wpm-slider" className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                Reading Speed
+            </label>
+            <span className="text-indigo-600 font-extrabold bg-indigo-100 px-3 py-1 rounded-md text-sm">
+                {wpm} WPM
+            </span>
+        </div>
         <input
           type="range"
           id="wpm-slider"
@@ -280,23 +267,13 @@ export default function Visualizer() {
           value={wpm}
           onChange={(e) => setWpm(Number(e.target.value))}
           disabled={isLoading}
-          style={{ width: '100%' }}
+          className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-indigo-600"
         />
+        <div className="flex justify-between mt-2 text-xs text-slate-400 font-medium">
+            <span>Slow (50)</span>
+            <span>Fast (1500)</span>
+        </div>
       </div>
     </div>
   );
 }
-
-const buttonStyle = (disabled = false) => ({
-  flex: '1 1 auto',
-  padding: '0.75rem 1rem',
-  fontSize: '1rem',
-  fontWeight: '600',
-  color: 'white',
-  backgroundColor: disabled ? '#9ca3af' : '#3b82f6',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  opacity: disabled ? 0.7 : 1,
-  transition: 'background-color 0.2s ease',
-});

@@ -1,49 +1,55 @@
-/* A clean base for Tailwind to build upon */
+/* 1. Import the Inter Font for the professional VidyaPath look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* 2. Apply Base Styles */
 body {
-  @apply bg-slate-50 font-sans antialiased;
+  @apply bg-slate-50 text-slate-800 antialiased;
+  /* Ensure the font family is applied */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* --- UTILITIES LAYER --- */
 @layer utilities {
-  /* Custom spinner animation for loading states */
+  /* Custom spinner animation */
   .spinner {
     animation: spin 1s linear infinite;
   }
 
-  /* ✅ NEW: Fade In Animation for Page Transitions */
+  /* Fade In Animation for Page Transitions */
   .animate-fadeIn {
     animation: fadeIn 0.4s ease-out forwards;
+  }
+  
+  /* Modal Animations */
+  .animate-in {
+    animation-duration: 0.2s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
   }
 }
 
 /* --- KEYFRAMES --- */
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* ✅ NEW: Fade In Keyframes (Slide up + Fade) */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px); /* Starts slightly lower */
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);    /* Settles into place */
+    transform: translateY(0);
   }
 }
 
-/* --- CUSTOM SCROLLBAR (Chrome/Safari/Edge) --- */
-/* This gives the entire app a "Pro" feel by hiding the default gray bar */
+/* --- CUSTOM SCROLLBAR --- */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
