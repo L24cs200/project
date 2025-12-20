@@ -8,21 +8,63 @@ const os = require('os');
 
 const upload = multer({ dest: os.tmpdir() });
 
-// --- FALLBACK QUIZ ---
+// --- ✅ UPDATED FALLBACK QUIZ (Eat That Frog) ---
+// This quiz appears if the AI fails, timeouts, or the PDF is unreadable.
 const FALLBACK_QUIZ = [
-    {
-        question: "The AI is currently warming up. This is a demo question.",
-        options: ["Ok", "Retry", "Wait", "Ignore"],
-        answer: "Retry"
-    },
-    {
-        question: "Why do I see this?",
-        options: ["PDF was empty", "AI timed out", "Invalid API Key", "All of the above"],
-        answer: "AI timed out"
-    }
+  {
+    question: "What does the phrase 'Eat That Frog' mean in the book?",
+    options: [
+      "Do the hardest and most important task first",
+      "Complete easy tasks before difficult ones",
+      "Avoid unpleasant work",
+      "Take frequent breaks"
+    ],
+    answer: "Do the hardest and most important task first"
+  },
+  {
+    question: "According to Brian Tracy, what is the main cause of procrastination?",
+    options: [
+      "Lack of intelligence",
+      "Fear of failure and lack of clarity",
+      "Too much free time",
+      "Poor physical health"
+    ],
+    answer: "Fear of failure and lack of clarity"
+  },
+  {
+    question: "What is the 80/20 Rule mentioned in Eat That Frog?",
+    options: [
+      "80% of tasks are easy",
+      "20% of tasks produce 80% of results",
+      "80% effort gives 20% results",
+      "Work 80 minutes, rest 20 minutes"
+    ],
+    answer: "20% of tasks produce 80% of results"
+  },
+  {
+    question: "Which technique helps break large tasks into manageable pieces?",
+    options: [
+      "Time blocking",
+      "Salami Slice method",
+      "Pomodoro technique",
+      "Delegation"
+    ],
+    answer: "Salami Slice method"
+  },
+  {
+    question: "What is one key habit of highly productive people according to the book?",
+    options: [
+      "They multitask continuously",
+      "They plan every day in advance",
+      "They avoid deadlines",
+      "They work only when motivated"
+    ],
+    answer: "They plan every day in advance"
+  }
 ];
 
 // --- HELPER: Clean JSON ---
+// Removes extra text like "Here is the JSON:" that AI sometimes adds
 function cleanJsonOutput(text) {
   const start = text.indexOf('[');
   const end = text.lastIndexOf(']');
@@ -61,7 +103,7 @@ async function generateWithRetry(prompt, apiKey, retries = 3) {
                 // Wait for the model to load
                 await new Promise(resolve => setTimeout(resolve, (waitTime * 1000) + 2000));
             } else {
-                // If it's another error (401, 400), throw it immediately
+                // If it's another error (401, 400), throw it immediately to hit the catch block below
                 throw error;
             }
         }
@@ -72,7 +114,9 @@ async function generateWithRetry(prompt, apiKey, retries = 3) {
 // Route: POST /api/quiz/generate
 router.post('/generate', upload.single('pdfFile'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No PDF uploaded" });
+    if (!req.file) {
+        return res.json({ quiz: FALLBACK_QUIZ, error: "No PDF uploaded. Using default quiz." });
+    }
 
     // 1. Extract Text
     let extractedText = "";
@@ -80,13 +124,16 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
       const buffer = fs.readFileSync(req.file.path);
       const pdfData = await pdf(buffer);
       extractedText = pdfData.text;
-      fs.unlinkSync(req.file.path);
+      fs.unlinkSync(req.file.path); // Clean up temp file
     } catch (err) {
-      console.error("PDF Error:", err);
-      return res.json({ quiz: FALLBACK_QUIZ, error: "Failed to read PDF" });
+      console.error("PDF Read Error:", err.message);
+      return res.json({ quiz: FALLBACK_QUIZ, error: "Failed to read PDF. Using default quiz." });
     }
 
-    if (extractedText.length < 50) return res.json({ quiz: FALLBACK_QUIZ, error: "PDF text too short" });
+    // Check if text is too short (e.g., scanned image PDF)
+    if (extractedText.length < 50) {
+        return res.json({ quiz: FALLBACK_QUIZ, error: "PDF text too short/unreadable. Using default quiz." });
+    }
 
     // 2. Prepare Prompt
     const truncatedText = extractedText.substring(0, 2500).replace(/\n/g, " ");
@@ -98,7 +145,8 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
 
     // 3. Call AI with Retry Logic
     if (!process.env.HUGGINGFACE_API_KEY) {
-        return res.json({ quiz: FALLBACK_QUIZ, error: "Missing API Key" });
+        console.warn("⚠️ Missing API Key. Using fallback.");
+        return res.json({ quiz: FALLBACK_QUIZ, error: "Missing API Key. Using default quiz." });
     }
 
     try {
@@ -109,16 +157,19 @@ router.post('/generate', upload.single('pdfFile'), async (req, res) => {
 
         if (!Array.isArray(quiz)) throw new Error("Invalid JSON structure");
 
+        // Success! Return the AI generated quiz
         res.json({ quiz });
 
     } catch (aiError) {
-        console.error("⚠️ AI Failed:", aiError.message);
-        res.json({ quiz: FALLBACK_QUIZ, error: "AI Busy/Timeout" });
+        console.error("⚠️ AI Failed or Timed Out:", aiError.message);
+        // ✅ HERE IS THE FALLBACK TRIGGER
+        res.json({ quiz: FALLBACK_QUIZ, error: "AI Busy/Timeout. Using default quiz." });
     }
 
   } catch (error) {
-    console.error("Server Error:", error);
-    res.status(500).json({ error: "Server crashed" });
+    console.error("Server Crash Error:", error);
+    // Even if the server crashes, try to send the fallback quiz if possible
+    res.status(500).json({ quiz: FALLBACK_QUIZ, error: "Server error. Using default quiz." });
   }
 });
 
