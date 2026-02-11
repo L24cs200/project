@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// ✅ Point to your Render Backend
-const BASE_URL = 'https://project-hggd.onrender.com/api'; 
+// 🔴 COMMENT OUT THE RENDER URL FOR NOW
+// const BASE_URL = 'https://project-hggd.onrender.com/api'; 
+
+// ✅ USE LOCALHOST TO TEST NEW FEATURES
+const BASE_URL = 'http://localhost:5000/api'; 
 
 const api = axios.create({
   baseURL: BASE_URL,
